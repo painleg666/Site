@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="MyBlazorSite.styles.css" />
+
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body class="dark-theme">
+
+    <Routes @rendermode="InteractiveServer" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+    <script>
+        async function uploadRepairPhoto(input) {
+        const message = document.getElementById("repairPhotoMessage");
+        const hidden = document.getElementById("repairPhotoPath");
+
+        if (!input.files || input.files.length === 0) {
+        message.innerText = "";
+        hidden.value = "";
+        return;
+        }
+
+        const file = input.files[0];
+
+        message.innerText = `Файл выбран: ${file.name}, размер: ${Math.round(file.size / 1024)} КБ`;
+
+        const formData = new FormData();
+        formData.append("photo", file);
+
+        try {
+        message.innerText = "Загрузка фото...";
+
+        const response = await fetch("/api/upload-photo", {
+        method: "POST",
+        body: formData
+        });
+
+        const responseText = await response.text();
+
+        let result = null;
+
+        try {
+        result = JSON.parse(responseText);
+        } catch {
+        result = null;
+        }
+
+        if (!response.ok) {
+        const serverMessage = result && result.error
+        ? result.error
+        : responseText;
+
+        message.innerText = `Ошибка загрузки: HTTP ${response.status}. ${serverMessage}`;
+        hidden.value = "";
+        return;
+        }
+
+        if (!result || !result.path) {
+        message.innerText = "Ошибка загрузки: сервер не вернул путь к файлу.";
+        hidden.value = "";
+        return;
+        }
+
+        hidden.value = result.path;
+        message.innerText = "Фото загружено: " + result.path;
+        } catch (e) {
+        message.innerText = "Ошибка загрузки фото: " + e.message;
+        hidden.value = "";
+        }
+        }
+
+        function getInputValue(id) {
+        const element = document.getElementById(id);
+        return element ? element.value : "";
+        }
+
+        function clearRepairPhoto() {
+        const input = document.getElementById("repairPhotoInput");
+        const hidden = document.getElementById("repairPhotoPath");
+        const message = document.getElementById("repairPhotoMessage");
+
+        if (input) input.value = "";
+        if (hidden) hidden.value = "";
+        if (message) message.innerText = "";
+        }
+    </script>
+</body>
+
+</html>

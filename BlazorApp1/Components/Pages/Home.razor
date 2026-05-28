@@ -1,0 +1,256 @@
+﻿@page "/"
+@using Microsoft.EntityFrameworkCore
+@using MyBlazorSite.Data
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject IJSRuntime JS
+
+<div class="container mt-4">
+
+    <div class="p-5 mb-4 bg-dark text-white rounded shadow">
+        <h1 class="display-5 fw-bold">
+            🚗 Система оценки кузовного ремонта
+        </h1>
+
+        <p class="fs-5 mt-3">
+            Веб-приложение для автоматического расчёта стоимости
+            кузовного ремонта автомобиля после ДТП.
+        </p>
+
+        <div class="mt-4">
+            <a href="/repair-requests" class="btn btn-success btn-lg me-3">
+                Перейти к заявкам
+            </a>
+
+            <a href="/prices" class="btn btn-warning btn-lg">
+                Админка прайсов
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Всего заявок</h6>
+                    <h2 class="fw-bold">@totalRequests</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">В обработке</h6>
+                    <h2 class="fw-bold">@inProgressRequests</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Завершено</h6>
+                    <h2 class="fw-bold">@completedRequests</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Общая сумма</h6>
+                    <h2 class="fw-bold">
+                        @totalRepairCost.ToString("N0") ₽
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="mb-2">Средняя стоимость ремонта</h5>
+            <h3 class="fw-bold">
+                @averageRepairCost.ToString("N0") ₽
+            </h3>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h4 class="mb-3">Статистика заявок по статусам</h4>
+
+            <div style="height: 350px;">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h1>📋</h1>
+
+                    <h5 class="card-title mt-3">
+                        Учёт заявок
+                    </h5>
+
+                    <p class="card-text">
+                        Хранение информации о клиентах и повреждениях.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h1>💰</h1>
+
+                    <h5 class="card-title mt-3">
+                        Расчёт стоимости
+                    </h5>
+
+                    <p class="card-text">
+                        Автоматическая оценка ремонта по прайс-листу.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h1>⚙️</h1>
+
+                    <h5 class="card-title mt-3">
+                        Админ-панель
+                    </h5>
+
+                    <p class="card-text">
+                        Управление стоимостью ремонта и услуг.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <a href="/ai-estimate"
+               class="btn btn-lg w-100 text-white"
+               style="
+            background-color:#000000;
+            border:2px solid #00bfff;
+            color:white;
+            font-weight:700;
+            box-shadow:0 0 12px rgba(0,191,255,0.5);">
+            🤖 AI-оценка повреждений
+        </a>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <h1>📊</h1>
+
+                    <h5 class="card-title mt-3">
+                        Аналитика
+                    </h5>
+
+                    <p class="card-text">
+                        Контроль заявок и статистика сервиса.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mt-5 shadow-sm border-0">
+        <div class="card-body">
+
+            <h3 class="mb-4">
+                🔥 Возможности системы
+            </h3>
+
+            <ul class="list-group list-group-flush">
+
+                <li class="list-group-item">
+                    ✔ Автоматический расчёт стоимости ремонта
+                </li>
+
+                <li class="list-group-item">
+                    ✔ Управление заявками клиентов
+                </li>
+
+                <li class="list-group-item">
+                    ✔ Изменение статусов ремонта
+                </li>
+
+                <li class="list-group-item">
+                    ✔ Гибкий прайс-лист деталей и работ
+                </li>
+
+                <li class="list-group-item">
+                    ✔ Поиск и фильтрация заявок
+                </li>
+
+                <li class="list-group-item">
+                    ✔ Современный интерфейс на Blazor
+                </li>
+
+            </ul>
+
+        </div>
+    </div>
+
+</div>
+@code {
+    private int newRequests;
+    private int estimatedRequests;
+    private int totalRequests;
+    private int inProgressRequests;
+    private int completedRequests;
+    private decimal totalRepairCost;
+    private decimal averageRepairCost;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        totalRequests = await db.RepairRequests.CountAsync();
+
+        newRequests = await db.RepairRequests
+            .CountAsync(x => x.Status == "Новая");
+
+        inProgressRequests = await db.RepairRequests
+            .CountAsync(x => x.Status == "В обработке");
+
+        estimatedRequests = await db.RepairRequests
+            .CountAsync(x => x.Status == "Оценена");
+
+        completedRequests = await db.RepairRequests
+            .CountAsync(x => x.Status == "Завершена");
+
+        totalRepairCost = await db.RepairRequests
+            .SumAsync(x => x.CalculatedCost);
+
+        if (totalRequests > 0)
+        {
+            averageRepairCost = await db.RepairRequests
+                .AverageAsync(x => x.CalculatedCost);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync(
+            "renderStatusChart",
+            newRequests,
+            inProgressRequests,
+            estimatedRequests,
+            completedRequests
+        );
+    }
+}

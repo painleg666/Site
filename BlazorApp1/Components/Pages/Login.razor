@@ -1,0 +1,56 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+
+@using MyBlazorSite.Data
+@inject AppUserState UserState
+@inject NavigationManager Navigation
+
+<div class="container mt-5" style="max-width: 450px;">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3 class="mb-0">Вход администратора</h3>
+        </div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Логин</label>
+                <input class="form-control" @bind="login" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Пароль</label>
+                <input class="form-control" type="password" @bind="password" />
+            </div>
+
+            <button class="btn btn-primary w-100" @onclick="LoginAdmin">
+                Войти
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string login = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    private void LoginAdmin()
+    {
+        if (login == "admin" && password == "admin123")
+        {
+            UserState.IsAdmin = true;
+            Navigation.NavigateTo("/prices");
+        }
+        else
+        {
+            errorMessage = "Неверный логин или пароль.";
+        }
+    }
+}

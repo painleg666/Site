@@ -1,0 +1,207 @@
+﻿@page "/ai-estimate"
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3 class="mb-0">AI-оценка повреждений автомобиля</h3>
+        </div>
+
+        <div class="card-body">
+            <p class="text-muted">
+                Демо-модуль имитирует работу AI-оценки повреждений после ДТП.
+            </p>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Повреждённая деталь</label>
+                    <select class="form-select" @bind="part">
+                        <option value="">Выберите деталь</option>
+                        <option>Передний бампер</option>
+                        <option>Задний бампер</option>
+                        <option>Капот</option>
+                        <option>Дверь</option>
+                        <option>Крыло</option>
+                        <option>Фара</option>
+                        <option>Крышка багажника</option>
+                        <option>Порог</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Характер повреждения</label>
+                    <select class="form-select" @bind="damageType">
+                        <option value="">Выберите тип</option>
+                        <option>Царапина</option>
+                        <option>Вмятина</option>
+                        <option>Трещина</option>
+                        <option>Разрыв детали</option>
+                        <option>Деформация кузова</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Визуальная степень</label>
+                    <select class="form-select" @bind="damageLevel">
+                        <option value="">Выберите степень</option>
+                        <option>Лёгкое</option>
+                        <option>Среднее</option>
+                        <option>Сильное</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary" @onclick="AnalyzeDamage">
+                        Запустить AI-оценку
+                    </button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger mt-4">
+                    @errorMessage
+                </div>
+            }
+
+            @if (resultVisible)
+            {
+                <div class="card mt-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Результат AI-оценки</h4>
+
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="alert alert-info">
+                                    <strong>Деталь:</strong><br />
+                                    @part
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="alert alert-warning">
+                                    <strong>Повреждение:</strong><br />
+                                    @damageType
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="alert alert-secondary">
+                                    <strong>Степень:</strong><br />
+                                    @damageLevel
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="alert alert-success">
+                                    <strong>Оценка:</strong><br />
+                                    @estimatedCost.ToString("N0") ₽
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <p>
+                            <strong>Рекомендуемый ремонт:</strong>
+                            @recommendedRepair
+                        </p>
+
+                        <p>
+                            <strong>Коэффициент сложности:</strong>
+                            @complexityCoefficient
+                        </p>
+
+                        <p>
+                            <strong>Комментарий системы:</strong>
+                            @aiComment
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string part = "";
+    private string damageType = "";
+    private string damageLevel = "";
+
+    private string recommendedRepair = "";
+    private string complexityCoefficient = "";
+    private string aiComment = "";
+    private string errorMessage = "";
+
+    private decimal estimatedCost;
+    private bool resultVisible;
+
+    private void AnalyzeDamage()
+    {
+        errorMessage = "";
+        resultVisible = false;
+
+        if (string.IsNullOrWhiteSpace(part) ||
+            string.IsNullOrWhiteSpace(damageType) ||
+            string.IsNullOrWhiteSpace(damageLevel))
+        {
+            errorMessage = "Заполните все поля для AI-оценки.";
+            return;
+        }
+
+        decimal basePrice = part switch
+        {
+            "Передний бампер" => 9000,
+            "Задний бампер" => 9000,
+            "Капот" => 16000,
+            "Дверь" => 14000,
+            "Крыло" => 12000,
+            "Фара" => 8000,
+            "Крышка багажника" => 15000,
+            "Порог" => 11000,
+            _ => 7000
+        };
+
+        decimal damageTypeMultiplier = damageType switch
+        {
+            "Царапина" => 1.0m,
+            "Вмятина" => 1.3m,
+            "Трещина" => 1.6m,
+            "Разрыв детали" => 2.0m,
+            "Деформация кузова" => 2.4m,
+            _ => 1.0m
+        };
+
+        decimal levelMultiplier = damageLevel switch
+        {
+            "Лёгкое" => 1.0m,
+            "Среднее" => 1.5m,
+            "Сильное" => 2.2m,
+            _ => 1.0m
+        };
+
+        estimatedCost = basePrice * damageTypeMultiplier * levelMultiplier;
+
+        recommendedRepair = damageType switch
+        {
+            "Царапина" => "Локальная покраска или полировка.",
+            "Вмятина" => "Рихтовка детали с последующей покраской.",
+            "Трещина" => "Ремонт пластика/металла или частичная замена.",
+            "Разрыв детали" => "Скорее всего потребуется замена детали.",
+            "Деформация кузова" => "Необходима диагностика геометрии кузова и комплексный ремонт.",
+            _ => "Требуется осмотр специалиста."
+        };
+
+        complexityCoefficient = (damageTypeMultiplier * levelMultiplier).ToString("0.00");
+
+        aiComment = damageLevel switch
+        {
+            "Лёгкое" => "Повреждение незначительное, ремонт возможен без замены основной детали.",
+            "Среднее" => "Повреждение требует кузовных работ и проверки креплений.",
+            "Сильное" => "Высокая вероятность скрытых повреждений. Рекомендуется очный осмотр мастером.",
+            _ => "Требуется дополнительная диагностика."
+        };
+
+        resultVisible = true;
+    }
+}

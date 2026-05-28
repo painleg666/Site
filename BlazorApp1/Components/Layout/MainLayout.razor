@@ -1,0 +1,52 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 dark-topbar">
+
+            <div class="ms-auto d-flex align-items-center gap-3">
+
+                <button class="btn btn-sm btn-outline-light"
+                        @onclick="ToggleTheme">
+                    @(isDarkTheme ? "☀️ Светлая тема" : "🌙 Тёмная тема")
+                </button>
+
+                <a href="https://learn.microsoft.com/aspnet/core/"
+                       target="_blank"
+                       class="text-white text-decoration-none">
+                    About
+                </a>
+
+            </div>
+
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+@code {
+
+    private bool isDarkTheme = true;
+
+    private async Task ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+
+        await JS.InvokeVoidAsync(
+            "toggleTheme",
+            isDarkTheme);
+    }
+}

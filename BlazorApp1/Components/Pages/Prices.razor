@@ -1,0 +1,194 @@
+﻿@page "/prices"
+@rendermode InteractiveServer
+@inject AppUserState UserState
+@inject NavigationManager Navigation
+@using Microsoft.EntityFrameworkCore
+@using MyBlazorSite.Data
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3 class="mb-0">Управление ценами ремонта</h3>
+        </div>
+
+        <div class="card-body">
+            <h5>Добавить позицию</h5>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Деталь</label>
+                    <input class="form-control" @bind="newPrice.PartName" placeholder="Например: Капот" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Тип ремонта</label>
+                    <select class="form-select" @bind="newPrice.RepairType">
+                        <option value="">Выберите тип</option>
+                        <option>Ремонт</option>
+                        <option>Покраска</option>
+                        <option>Замена</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Базовая цена</label>
+                    <input class="form-control" type="number" @bind="newPrice.BasePrice" />
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary" @onclick="AddPrice">
+                        Добавить цену
+                    </button>
+                </div>
+            </div>
+
+            <hr />
+
+            <h5>Прайс-лист</h5>
+
+            @if (prices.Count == 0)
+            {
+                <div class="alert alert-info">Прайс пока пуст.</div>
+            }
+            else
+            {
+                <div class="table-responsive-mobile">
+                    <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Деталь</th>
+                            <th>Тип ремонта</th>
+                            <th>Базовая цена</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in prices)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+
+                                <td>
+                                    <input class="form-control form-control-sm"
+                                           @bind="item.PartName" />
+                                </td>
+
+                                <td>
+                                    <select class="form-select form-select-sm"
+                                            @bind="item.RepairType">
+                                        <option>Ремонт</option>
+                                        <option>Покраска</option>
+                                        <option>Замена</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <input class="form-control form-control-sm"
+                                           type="number"
+                                           @bind="item.BasePrice" />
+                                </td>
+
+                                <td>
+                                    <button class="btn btn-success btn-sm me-2"
+                                            @onclick="() => SavePrice(item)">
+                                        Сохранить
+                                    </button>
+
+                                    <button class="btn btn-danger btn-sm"
+                                            @onclick="() => DeletePrice(item.Id)">
+                                        Удалить
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!UserState.IsAdmin) 
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+    private List<RepairPriceItem> prices = new();
+
+    private RepairPriceItem newPrice = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPrices();
+    }
+
+    private async Task LoadPrices()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        prices = await db.RepairPriceItems
+            .OrderBy(x => x.PartName)
+            .ThenBy(x => x.RepairType)
+            .ToListAsync();
+    }
+
+    private async Task AddPrice()
+    {
+        if (string.IsNullOrWhiteSpace(newPrice.PartName))
+            return;
+
+        if (string.IsNullOrWhiteSpace(newPrice.RepairType))
+            return;
+
+        if (newPrice.BasePrice <= 0)
+            return;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        db.RepairPriceItems.Add(newPrice);
+        await db.SaveChangesAsync();
+
+        newPrice = new RepairPriceItem();
+
+        await LoadPrices();
+    }
+
+    private async Task SavePrice(RepairPriceItem item)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var price = await db.RepairPriceItems.FindAsync(item.Id);
+
+        if (price is null)
+            return;
+
+        price.PartName = item.PartName;
+        price.RepairType = item.RepairType;
+        price.BasePrice = item.BasePrice;
+
+        await db.SaveChangesAsync();
+
+        await LoadPrices();
+    }
+
+    private async Task DeletePrice(int id)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var price = await db.RepairPriceItems.FindAsync(id);
+
+        if (price is null)
+            return;
+
+        db.RepairPriceItems.Remove(price);
+        await db.SaveChangesAsync();
+
+        await LoadPrices();
+    }
+}
