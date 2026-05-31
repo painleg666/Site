@@ -19,6 +19,7 @@ public class RepairRequest
     public string? PhotoPath { get; set; }
 
     public string Status { get; set; } = "Новая";
+    public string OwnerKey { get; set; } = "";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,207 +1,1017 @@
 ﻿@page "/ai-estimate"
+@page "/ai-damage"
 @rendermode InteractiveServer
 
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3 class="mb-0">AI-оценка повреждений автомобиля</h3>
+@using Microsoft.AspNetCore.Components.Forms
+@using MyBlazorSite.Data
+@using MyBlazorSite.Services
+@using System.Text.Encodings.Web
+@using System.Text.Json
+
+@inject PendingAiDamageState PendingAiDamageState
+@inject NavigationManager Navigation
+@inject GeminiDamageAssessmentService GeminiDamageService
+
+<div class="ai-damage-page">
+    <section class="ai-damage-hero">
+        <div>
+            <span class="section-kicker">AI-подсказка</span>
+            <h2>Оценка кузовного повреждения по фото</h2>
+            <p>
+                Загрузите фото повреждения. Система отправит изображение в Gemini API,
+                получит структурированную подсказку и покажет результат для ручной проверки.
+            </p>
         </div>
 
-        <div class="card-body">
-            <p class="text-muted">
-                Демо-модуль имитирует работу AI-оценки повреждений после ДТП.
-            </p>
+        <div class="ai-mode-badge">
+            GEMINI
+        </div>
+    </section>
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Повреждённая деталь</label>
-                    <select class="form-select" @bind="part">
-                        <option value="">Выберите деталь</option>
-                        <option>Передний бампер</option>
-                        <option>Задний бампер</option>
-                        <option>Капот</option>
-                        <option>Дверь</option>
-                        <option>Крыло</option>
-                        <option>Фара</option>
-                        <option>Крышка багажника</option>
-                        <option>Порог</option>
-                    </select>
-                </div>
+    <section class="ai-damage-grid">
+        <div class="ai-glass-card">
+            <div class="ai-card-title">
+                <span class="ai-card-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 8h4l2-3h4l2 3h4v12H4z" />
+                        <circle cx="12" cy="14" r="3" />
+                    </svg>
+                </span>
 
-                <div class="col-md-4">
-                    <label class="form-label">Характер повреждения</label>
-                    <select class="form-select" @bind="damageType">
-                        <option value="">Выберите тип</option>
-                        <option>Царапина</option>
-                        <option>Вмятина</option>
-                        <option>Трещина</option>
-                        <option>Разрыв детали</option>
-                        <option>Деформация кузова</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Визуальная степень</label>
-                    <select class="form-select" @bind="damageLevel">
-                        <option value="">Выберите степень</option>
-                        <option>Лёгкое</option>
-                        <option>Среднее</option>
-                        <option>Сильное</option>
-                    </select>
-                </div>
-
-                <div class="col-12">
-                    <button class="btn btn-primary" @onclick="AnalyzeDamage">
-                        Запустить AI-оценку
-                    </button>
+                <div>
+                    <h3>Фото повреждения</h3>
+                    <p>JPG, PNG или WEBP. Желательно крупный план повреждённой зоны.</p>
                 </div>
             </div>
 
+            <div class="ai-upload-zone">
+                <InputFile OnChange="OnPhotoSelected"
+                           accept=".jpg,.jpeg,.png,.webp"
+                           class="form-control" />
+
+                @if (!string.IsNullOrWhiteSpace(selectedFileName))
+                {
+                    <div class="ai-file-info">
+                        <strong>@selectedFileName</strong>
+                        <span>@selectedFileSizeText</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="ai-file-empty">
+                        Фото ещё не выбрано.
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(photoPreviewDataUrl))
+            {
+                <div class="ai-photo-preview">
+                    <img src="@photoPreviewDataUrl" alt="Фото повреждения" />
+                </div>
+            }
+
             @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                <div class="alert alert-danger mt-4">
+                <div class="ai-error">
                     @errorMessage
                 </div>
             }
 
-            @if (resultVisible)
+            <div class="ai-actions">
+                <button type="button"
+                        class="btn btn-primary"
+                        disabled="@isAnalyzing"
+                        @onclick="AnalyzePhotoGemini">
+                    @(isAnalyzing ? "AI анализирует..." : "Запустить Gemini-оценку")
+                </button>
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        disabled="@isAnalyzing"
+                        @onclick="AnalyzePhotoDemo">
+                    Демо-проверка
+                </button>
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        disabled="@isAnalyzing"
+                        @onclick="ResetAnalysis">
+                    Очистить
+                </button>
+            </div>
+        </div>
+
+        <aside class="ai-glass-card ai-result-card">
+            <div class="ai-card-title">
+                <span class="ai-card-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="6" y="7" width="12" height="11" rx="3" />
+                        <path d="M9 7V4" />
+                        <path d="M15 7V4" />
+                        <circle cx="10" cy="12" r="1" />
+                        <circle cx="14" cy="12" r="1" />
+                        <path d="M10 16h4" />
+                    </svg>
+                </span>
+
+                <div>
+                    <h3>Результат AI</h3>
+                    <p>Предварительная подсказка для заполнения заявки.</p>
+                </div>
+            </div>
+
+            @if (isAnalyzing)
             {
-                <div class="card mt-4 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h4 class="mb-3">Результат AI-оценки</h4>
-
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <div class="alert alert-info">
-                                    <strong>Деталь:</strong><br />
-                                    @part
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="alert alert-warning">
-                                    <strong>Повреждение:</strong><br />
-                                    @damageType
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="alert alert-secondary">
-                                    <strong>Степень:</strong><br />
-                                    @damageLevel
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="alert alert-success">
-                                    <strong>Оценка:</strong><br />
-                                    @estimatedCost.ToString("N0") ₽
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr />
-
-                        <p>
-                            <strong>Рекомендуемый ремонт:</strong>
-                            @recommendedRepair
-                        </p>
-
-                        <p>
-                            <strong>Коэффициент сложности:</strong>
-                            @complexityCoefficient
-                        </p>
-
-                        <p>
-                            <strong>Комментарий системы:</strong>
-                            @aiComment
-                        </p>
-                    </div>
+                <div class="ai-loading">
+                    <div class="ai-loader"></div>
+                    <strong>Идёт анализ фото...</strong>
+                    <span>Фото отправлено в Gemini API. Обычно это занимает несколько секунд.</span>
                 </div>
             }
-        </div>
-    </div>
+            else if (result is null)
+            {
+                <div class="ai-empty-result">
+                    Загрузите фото и нажмите “Запустить Gemini-оценку”. После анализа результат можно будет перенести в новую заявку.
+                </div>
+            }
+            else
+            {
+                <div class="ai-confidence">
+                    <div>
+                        <span>Уверенность @(isDemoResult ? "DEMO" : "Gemini")</span>
+                        <strong>@((result.Confidence * 100).ToString("0"))%</strong>
+                    </div>
+
+                    <div class="ai-confidence-bar">
+                        <span style="width:@((result.Confidence * 100).ToString("0"))%"></span>
+                    </div>
+                </div>
+
+                @if (!result.IsCarDamagePhoto || result.NeedsHumanReview)
+                {
+                    <div class="ai-review-warning">
+                        Результат требует ручной проверки оценщиком.
+                    </div>
+                }
+
+                <div class="ai-result-grid">
+                    <div class="ai-result-item">
+                        <span>Основная зона</span>
+                        <strong>@result.DetectedPart</strong>
+                    </div>
+
+                    <div class="ai-result-item">
+                        <span>Повреждений найдено</span>
+                        <strong>@result.Items.Count</strong>
+                    </div>
+
+                    <div class="ai-result-item">
+                        <span>Самое серьёзное</span>
+                        <strong>@result.DamageLevel</strong>
+                    </div>
+
+                    <div class="ai-result-item">
+                        <span>Тип ремонта</span>
+                        <strong>@result.RepairType</strong>
+                    </div>
+                </div>
+
+                <div class="ai-damage-list">
+                    <div class="ai-damage-list-title">
+                        Видимые повреждённые зоны
+                    </div>
+
+                    @foreach (var damage in result.Items)
+                    {
+                        <div class="ai-damage-row">
+                            <div>
+                                <strong>@damage.DetectedPart</strong>
+                                <span>@damage.DamageType / @damage.RepairType / @damage.DamageLevel</span>
+
+                                @if (!string.IsNullOrWhiteSpace(damage.Comment))
+                                {
+                                    <small>@damage.Comment</small>
+                                }
+                            </div>
+
+                            <div class="ai-damage-cost">
+                                @damage.EstimatedCost.ToString("N0") ₽
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="ai-price-box">
+                    <span>Предварительная сумма по найденным зонам</span>
+                    <strong>@result.EstimatedCost.ToString("N0") ₽</strong>
+                    <small>Это сумма локального расчёта по всем найденным AI-позициям. Финальный расчёт лучше брать из основного прайс-листа.</small>
+                </div>
+
+
+                @if (result.Items.Count > 0)
+                {
+                    <div class="ai-apply-panel">
+                        <button type="button"
+                                class="ai-apply-button"
+                                @onclick="ApplyAiResultToRequest">
+                            <span class="ai-apply-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 12h14" />
+                                    <path d="M13 6l6 6-6 6" />
+                                </svg>
+                            </span>
+
+                            <span>
+                                <strong>Применить к новой заявке</strong>
+                                <small>Перенести найденные повреждения в корзину ремонта</small>
+                            </span>
+                        </button>
+
+                        <div class="ai-apply-note">
+                            После применения проверьте позиции, автомобиль и итоговый расчёт перед сохранением заявки.
+                        </div>
+                    </div>
+                }
+
+                <div class="ai-comment-box">
+                    <strong>Общий комментарий AI</strong>
+                    <p>@result.Comment</p>
+                </div>
+
+                @if (showTechnicalJson)
+                {
+                    <div class="ai-json-box">
+                        <strong>Структура результата</strong>
+                        <textarea readonly>@GetResultJson()</textarea>
+                    </div>
+                }
+            }
+        </aside>
+    </section>
+
+    <section class="ai-warning-card">
+        <strong>Важно</strong>
+        <span>
+            AI-подсказка не должна автоматически утверждать стоимость ремонта.
+            Результат нужно проверять вручную, а итоговую цену рассчитывать через ваш прайс-лист.
+        </span>
+    </section>
 </div>
 
+<style>
+    .ai-damage-page {
+        display: grid;
+        gap: 18px;
+    }
+
+    .ai-damage-hero {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-start;
+        padding: 24px;
+        border-radius: 24px;
+        background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 42%), rgba(10, 28, 58, 0.58);
+        border: 1px solid rgba(147, 197, 253, 0.18);
+        backdrop-filter: blur(18px) saturate(1.25);
+        box-shadow: 0 22px 70px rgba(0, 0, 0, 0.22);
+    }
+
+        .ai-damage-hero h2 {
+            margin: 6px 0 8px;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+        }
+
+        .ai-damage-hero p {
+            margin: 0;
+            max-width: 760px;
+            color: #b8c7e6;
+            line-height: 1.5;
+        }
+
+    .ai-mode-badge {
+        min-width: 82px;
+        height: 36px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #bfdbfe;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        background: rgba(37, 99, 235, 0.18);
+        border: 1px solid rgba(147, 197, 253, 0.24);
+    }
+
+    .ai-damage-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 420px;
+        gap: 18px;
+        align-items: start;
+    }
+
+    .ai-glass-card,
+    .ai-warning-card {
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(15, 35, 70, 0.58), rgba(6, 16, 36, 0.52)), rgba(7, 19, 38, 0.42);
+        border: 1px solid rgba(147, 197, 253, 0.16);
+        backdrop-filter: blur(18px) saturate(1.2);
+        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        padding: 22px;
+    }
+
+    .ai-card-title {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        margin-bottom: 18px;
+    }
+
+        .ai-card-title h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 21px;
+            font-weight: 900;
+        }
+
+        .ai-card-title p {
+            margin: 4px 0 0;
+            color: #9fb3d9;
+            font-size: 14px;
+        }
+
+    .ai-card-icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 15px;
+        color: #bfdbfe;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.26), rgba(124, 58, 237, 0.16)), rgba(13, 110, 253, 0.12);
+        border: 1px solid rgba(147, 197, 253, 0.22);
+    }
+
+        .ai-card-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .ai-upload-zone {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(3, 12, 27, 0.44);
+        border: 1px dashed rgba(147, 197, 253, 0.24);
+    }
+
+    .ai-file-info,
+    .ai-file-empty {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #9fb3d9;
+    }
+
+        .ai-file-info strong {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+
+    .ai-photo-preview {
+        margin-top: 16px;
+        height: 340px;
+        border-radius: 20px;
+        overflow: hidden;
+        background: rgba(3, 12, 27, 0.72);
+        border: 1px solid rgba(147, 197, 253, 0.16);
+        display: grid;
+        place-items: center;
+    }
+
+        .ai-photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+    .ai-error {
+        margin-top: 16px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        color: #ffd7df;
+        background: rgba(255, 77, 109, 0.14);
+        border: 1px solid rgba(255, 77, 109, 0.34);
+        font-weight: 800;
+        white-space: pre-wrap;
+    }
+
+    .ai-actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .ai-loading,
+    .ai-empty-result {
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        gap: 8px;
+        color: #9fb3d9;
+        border-radius: 18px;
+        background: rgba(3, 12, 27, 0.36);
+        border: 1px solid rgba(147, 197, 253, 0.12);
+        padding: 20px;
+    }
+
+        .ai-loading strong {
+            color: #ffffff;
+        }
+
+    .ai-loader {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 3px solid rgba(147, 197, 253, 0.18);
+        border-top-color: #60a5fa;
+        animation: ai-spin 0.9s linear infinite;
+    }
+
+    @@keyframes ai-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .ai-confidence {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+        .ai-confidence > div:first-child {
+            display: flex;
+            justify-content: space-between;
+            color: #9fb3d9;
+        }
+
+        .ai-confidence strong {
+            color: #ffffff;
+        }
+
+    .ai-confidence-bar {
+        height: 9px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(147, 197, 253, 0.12);
+    }
+
+        .ai-confidence-bar span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #32d583);
+        }
+
+    .ai-review-warning {
+        margin-bottom: 14px;
+        padding: 11px 12px;
+        border-radius: 14px;
+        color: #fef3c7;
+        background: rgba(251, 191, 36, 0.12);
+        border: 1px solid rgba(251, 191, 36, 0.28);
+        font-weight: 800;
+    }
+
+    .ai-result-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .ai-result-item {
+        padding: 12px;
+        border-radius: 15px;
+        background: rgba(3, 12, 27, 0.42);
+        border: 1px solid rgba(147, 197, 253, 0.12);
+    }
+
+        .ai-result-item span,
+        .ai-price-box span {
+            display: block;
+            color: #9fb3d9;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .ai-result-item strong {
+            color: #ffffff;
+            font-weight: 900;
+        }
+
+    .ai-damage-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .ai-damage-list-title {
+        color: #ffffff;
+        font-weight: 900;
+        font-size: 15px;
+    }
+
+    .ai-damage-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        border-radius: 15px;
+        background: rgba(3, 12, 27, 0.42);
+        border: 1px solid rgba(147, 197, 253, 0.12);
+    }
+
+        .ai-damage-row strong {
+            display: block;
+            color: #ffffff;
+            font-weight: 900;
+        }
+
+        .ai-damage-row span {
+            display: block;
+            margin-top: 3px;
+            color: #b8c7e6;
+            font-size: 13px;
+        }
+
+        .ai-damage-row small {
+            display: block;
+            margin-top: 6px;
+            color: #8fa6cd;
+            line-height: 1.3;
+        }
+
+    .ai-damage-cost {
+        color: #32d583;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+
+    .ai-price-box {
+        margin-top: 12px;
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(50, 213, 131, 0.10);
+        border: 1px solid rgba(50, 213, 131, 0.22);
+    }
+
+        .ai-price-box strong {
+            display: block;
+            color: #32d583;
+            font-size: 30px;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+        }
+
+        .ai-price-box small {
+            display: block;
+            margin-top: 6px;
+            color: #a7f3d0;
+            line-height: 1.35;
+        }
+
+
+    .ai-apply-panel {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .ai-apply-button {
+        width: 100%;
+        min-height: 62px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px 15px;
+        border-radius: 18px;
+        border: 1px solid rgba(50, 213, 131, 0.42);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.72), rgba(124, 58, 237, 0.62)), rgba(50, 213, 131, 0.12);
+        color: #ffffff;
+        text-align: left;
+        box-shadow: 0 16px 38px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+        transition: 0.16s ease;
+    }
+
+        .ai-apply-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(50, 213, 131, 0.70);
+            box-shadow: 0 18px 44px rgba(37, 99, 235, 0.30), 0 0 0 3px rgba(50, 213, 131, 0.10);
+        }
+
+        .ai-apply-button strong {
+            display: block;
+            font-size: 15px;
+            font-weight: 950;
+            line-height: 1.2;
+        }
+
+        .ai-apply-button small {
+            display: block;
+            margin-top: 3px;
+            color: #dbeafe;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+    .ai-apply-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.13);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+        .ai-apply-icon svg {
+            width: 21px;
+            height: 21px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .ai-apply-note {
+        padding: 11px 12px;
+        border-radius: 14px;
+        background: rgba(251, 191, 36, 0.09);
+        border: 1px solid rgba(251, 191, 36, 0.18);
+        color: #fef3c7;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .ai-comment-box,
+    .ai-json-box {
+        margin-top: 12px;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(3, 12, 27, 0.42);
+        border: 1px solid rgba(147, 197, 253, 0.12);
+    }
+
+        .ai-comment-box strong,
+        .ai-json-box strong {
+            color: #ffffff;
+        }
+
+        .ai-comment-box p {
+            margin: 8px 0 0;
+            color: #d8e8ff;
+            line-height: 1.45;
+        }
+
+        .ai-json-box textarea {
+            margin-top: 10px;
+            width: 100%;
+            min-height: 170px;
+            resize: vertical;
+            border-radius: 14px;
+            padding: 12px;
+            color: #dbeafe;
+            background: rgba(3, 12, 27, 0.72);
+            border: 1px solid rgba(147, 197, 253, 0.14);
+            font-family: Consolas, monospace;
+            font-size: 13px;
+        }
+
+    .ai-warning-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        color: #d8e8ff;
+        border-color: rgba(251, 191, 36, 0.24);
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(37, 99, 235, 0.08)), rgba(7, 19, 38, 0.42);
+    }
+
+        .ai-warning-card strong {
+            color: #fef3c7;
+            white-space: nowrap;
+        }
+
+    @@media (max-width: 1050px) {
+        .ai-damage-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-damage-hero {
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .ai-result-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-photo-preview {
+            height: 260px;
+        }
+    }
+</style>
+
 @code {
-    private string part = "";
-    private string damageType = "";
-    private string damageLevel = "";
-
-    private string recommendedRepair = "";
-    private string complexityCoefficient = "";
-    private string aiComment = "";
+    private byte[]? selectedPhotoBytes;
+    private string selectedPhotoContentType = "";
+    private string selectedFileName = "";
+    private string selectedFileSizeText = "";
+    private string photoPreviewDataUrl = "";
     private string errorMessage = "";
+    private bool isAnalyzing;
+    private bool isDemoResult;
+    private AiDamageResult? result;
+    private bool showTechnicalJson;
 
-    private decimal estimatedCost;
-    private bool resultVisible;
+    private const long MaxFileSize = 8 * 1024 * 1024;
 
-    private void AnalyzeDamage()
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
     {
-        errorMessage = "";
-        resultVisible = false;
+        ResetAnalysis(keepPhoto: false);
 
-        if (string.IsNullOrWhiteSpace(part) ||
-            string.IsNullOrWhiteSpace(damageType) ||
-            string.IsNullOrWhiteSpace(damageLevel))
+        var file = e.File;
+
+        if (file is null)
         {
-            errorMessage = "Заполните все поля для AI-оценки.";
+            errorMessage = "Фото не выбрано.";
             return;
         }
 
-        decimal basePrice = part switch
+        if (file.Size > MaxFileSize)
         {
-            "Передний бампер" => 9000,
-            "Задний бампер" => 9000,
-            "Капот" => 16000,
-            "Дверь" => 14000,
-            "Крыло" => 12000,
-            "Фара" => 8000,
-            "Крышка багажника" => 15000,
-            "Порог" => 11000,
-            _ => 7000
+            errorMessage = "Файл слишком большой. Максимальный размер — 8 МБ.";
+            return;
+        }
+
+        selectedFileName = file.Name;
+        selectedFileSizeText = $"{file.Size / 1024.0 / 1024.0:0.00} МБ";
+        selectedPhotoContentType = string.IsNullOrWhiteSpace(file.ContentType)
+            ? "image/jpeg"
+            : file.ContentType;
+
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+
+            selectedPhotoBytes = memoryStream.ToArray();
+            var base64 = Convert.ToBase64String(selectedPhotoBytes);
+            photoPreviewDataUrl = $"data:{selectedPhotoContentType};base64,{base64}";
+        }
+        catch
+        {
+            selectedPhotoBytes = null;
+            photoPreviewDataUrl = "";
+            errorMessage = "Не удалось загрузить фото для предпросмотра.";
+        }
+    }
+
+    private async Task AnalyzePhotoGemini()
+    {
+        errorMessage = "";
+        result = null;
+        isDemoResult = false;
+
+        if (selectedPhotoBytes is null || selectedPhotoBytes.Length == 0)
+        {
+            errorMessage = "Сначала загрузите фото повреждения.";
+            return;
+        }
+
+        isAnalyzing = true;
+
+        try
+        {
+            result = await GeminiDamageService.AnalyzeAsync(selectedPhotoBytes, selectedPhotoContentType);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isAnalyzing = false;
+        }
+    }
+
+    private async Task AnalyzePhotoDemo()
+    {
+        errorMessage = "";
+        result = null;
+        isDemoResult = true;
+
+        if (selectedPhotoBytes is null || selectedPhotoBytes.Length == 0)
+        {
+            errorMessage = "Сначала загрузите фото повреждения.";
+            return;
+        }
+
+        isAnalyzing = true;
+
+        try
+        {
+            await Task.Delay(900);
+            result = CreateDemoResult(selectedFileName, selectedPhotoBytes.Length);
+        }
+        finally
+        {
+            isAnalyzing = false;
+        }
+    }
+
+    private AiDamageResult CreateDemoResult(string fileName, long fileSize)
+    {
+        var lowerName = fileName.ToLowerInvariant();
+
+        var detectedPart =
+            lowerName.Contains("door") || lowerName.Contains("двер") ? "Передняя левая дверь" :
+            lowerName.Contains("bumper") || lowerName.Contains("бампер") ? "Передний бампер" :
+            lowerName.Contains("hood") || lowerName.Contains("капот") ? "Капот" :
+            lowerName.Contains("light") || lowerName.Contains("фара") ? "Передняя фара" :
+            "Передний бампер";
+
+        var damageType =
+            lowerName.Contains("dent") || lowerName.Contains("вмят") ? "Вмятина" :
+            lowerName.Contains("crack") || lowerName.Contains("трещ") ? "Трещина" :
+            lowerName.Contains("chip") || lowerName.Contains("скол") ? "Скол" :
+            "Царапина";
+
+        var repairType = damageType switch
+        {
+            "Царапина" => "Покраска",
+            "Скол" => detectedPart.Contains("фара", StringComparison.OrdinalIgnoreCase) ? "Замена" : "Покраска",
+            "Вмятина" => "Ремонт",
+            "Трещина" => detectedPart.Contains("фара", StringComparison.OrdinalIgnoreCase) ? "Замена" : "Ремонт",
+            _ => "Ремонт"
         };
 
-        decimal damageTypeMultiplier = damageType switch
+        var damageLevel = damageType switch
         {
-            "Царапина" => 1.0m,
-            "Вмятина" => 1.3m,
-            "Трещина" => 1.6m,
-            "Разрыв детали" => 2.0m,
-            "Деформация кузова" => 2.4m,
-            _ => 1.0m
+            "Царапина" => "Лёгкое",
+            "Скол" => "Лёгкое",
+            "Вмятина" => "Среднее",
+            "Трещина" => "Среднее",
+            _ => "Среднее"
         };
 
-        decimal levelMultiplier = damageLevel switch
+        var confidence = 0.72 + (fileSize % 17) / 100.0;
+
+        if (confidence < 0.68)
+            confidence = 0.68;
+
+        if (confidence > 0.89)
+            confidence = 0.89;
+
+        var demoItem = new AiDamageItem
+        {
+            DetectedPart = detectedPart,
+            DamageType = damageType,
+            RepairType = repairType,
+            DamageLevel = damageLevel,
+            Confidence = confidence,
+            NeedsHumanReview = true,
+            Comment = $"На фото предположительно обнаружено повреждение типа “{damageType}” на детали “{detectedPart}”. Это демонстрационный результат."
+        };
+
+        demoItem.EstimatedCost = CalculateDemoCost(demoItem);
+
+        var demoResult = new AiDamageResult
+        {
+            DetectedPart = demoItem.DetectedPart,
+            DamageType = demoItem.DamageType,
+            RepairType = demoItem.RepairType,
+            DamageLevel = demoItem.DamageLevel,
+            Confidence = demoItem.Confidence,
+            EstimatedCost = demoItem.EstimatedCost,
+            IsCarDamagePhoto = true,
+            NeedsHumanReview = true,
+            Comment = "Демонстрационная AI-подсказка сформирована локально.",
+            Items = new List<AiDamageItem> { demoItem }
+        };
+
+        return demoResult;
+    }
+
+    private static decimal CalculateDemoCost(AiDamageItem item)
+    {
+        var basePrice = item.DetectedPart switch
+        {
+            "Передний бампер" => 9000m,
+            "Капот" => 12000m,
+            "Передняя левая дверь" => 10000m,
+            "Передняя фара" => 18000m,
+            _ => 9000m
+        };
+
+        var levelMultiplier = item.DamageLevel switch
         {
             "Лёгкое" => 1.0m,
-            "Среднее" => 1.5m,
-            "Сильное" => 2.2m,
+            "Среднее" => 1.4m,
+            "Сильное" => 1.9m,
             _ => 1.0m
         };
 
-        estimatedCost = basePrice * damageTypeMultiplier * levelMultiplier;
+        return Math.Round(basePrice * levelMultiplier, 0);
+    }
 
-        recommendedRepair = damageType switch
+
+    private void ApplyAiResultToRequest()
+    {
+        errorMessage = "";
+
+        if (result is null || result.Items.Count == 0)
         {
-            "Царапина" => "Локальная покраска или полировка.",
-            "Вмятина" => "Рихтовка детали с последующей покраской.",
-            "Трещина" => "Ремонт пластика/металла или частичная замена.",
-            "Разрыв детали" => "Скорее всего потребуется замена детали.",
-            "Деформация кузова" => "Необходима диагностика геометрии кузова и комплексный ремонт.",
-            _ => "Требуется осмотр специалиста."
+            errorMessage = "Нет AI-результата для применения.";
+            return;
+        }
+
+        PendingAiDamageState.SetItems(result.Items);
+
+        Navigation.NavigateTo("/repair-requests?ai=1");
+    }
+
+    private string GetResultJson()
+    {
+        if (result is null)
+            return "";
+
+        var payload = new
+        {
+            result.DetectedPart,
+            result.DamageType,
+            result.RepairType,
+            result.DamageLevel,
+            Confidence = Math.Round(result.Confidence, 2),
+            result.EstimatedCost,
+            result.IsCarDamagePhoto,
+            result.NeedsHumanReview,
+            result.Comment,
+            Items = result.Items.Select(x => new
+            {
+                x.DetectedPart,
+                x.DamageType,
+                x.RepairType,
+                x.DamageLevel,
+                Confidence = Math.Round(x.Confidence, 2),
+                x.EstimatedCost,
+                x.NeedsHumanReview,
+                x.Comment
+            }).ToList()
         };
 
-        complexityCoefficient = (damageTypeMultiplier * levelMultiplier).ToString("0.00");
-
-        aiComment = damageLevel switch
+        return JsonSerializer.Serialize(payload, new JsonSerializerOptions
         {
-            "Лёгкое" => "Повреждение незначительное, ремонт возможен без замены основной детали.",
-            "Среднее" => "Повреждение требует кузовных работ и проверки креплений.",
-            "Сильное" => "Высокая вероятность скрытых повреждений. Рекомендуется очный осмотр мастером.",
-            _ => "Требуется дополнительная диагностика."
-        };
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+    }
 
-        resultVisible = true;
+    private void ResetAnalysis()
+    {
+        ResetAnalysis(keepPhoto: false);
+    }
+
+    private void ResetAnalysis(bool keepPhoto)
+    {
+        errorMessage = "";
+        isAnalyzing = false;
+        isDemoResult = false;
+        result = null;
+
+        if (!keepPhoto)
+        {
+            selectedPhotoBytes = null;
+            selectedPhotoContentType = "";
+            selectedFileName = "";
+            selectedFileSizeText = "";
+            photoPreviewDataUrl = "";
+        }
     }
 }

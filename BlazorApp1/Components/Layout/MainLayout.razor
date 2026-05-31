@@ -1,52 +1,2358 @@
 ﻿@inherits LayoutComponentBase
-@inject IJSRuntime JS
+@implements IDisposable
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@using Microsoft.AspNetCore.Components.Web
+@using MyBlazorSite.Data
 
-    <main>
-        <div class="top-row px-4 dark-topbar">
+@inject NavigationManager Navigation
+@inject DashboardStatsService StatsService
+@inject DashboardStatsNotifier StatsNotifier
+@inject AppUserState UserState
 
-            <div class="ms-auto d-flex align-items-center gap-3">
+<style>
+    html,
+    body {
+        margin: 0;
+        min-height: 100%;
+        background: #071326;
+        color: #f4f7ff;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
 
-                <button class="btn btn-sm btn-outline-light"
-                        @onclick="ToggleTheme">
-                    @(isDarkTheme ? "☀️ Светлая тема" : "🌙 Тёмная тема")
-                </button>
+    a {
+        text-decoration: none;
+    }
 
-                <a href="https://learn.microsoft.com/aspnet/core/"
-                       target="_blank"
-                       class="text-white text-decoration-none">
-                    About
-                </a>
+    .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 290px minmax(0, 1fr);
+        background: #071326;
+        color: #f4f7ff;
+    }
 
+    .app-sidebar {
+        min-height: 100vh;
+        padding: 24px 18px;
+        background: linear-gradient(180deg, #081a35, #061226);
+        border-right: 1px solid rgba(80, 140, 255, 0.25);
+        box-shadow: 8px 0 35px rgba(0, 0, 0, 0.35);
+        position: sticky;
+        top: 0;
+    }
+
+    .brand-block {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 28px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #0d6efd, #6f42c1);
+        box-shadow: 0 0 24px rgba(13, 110, 253, 0.45);
+    }
+
+    .brand-title {
+        font-size: 21px;
+        font-weight: 800;
+        color: #ffffff;
+    }
+
+    .brand-subtitle {
+        color: #8fa6c8;
+        font-size: 13px;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .nav-item {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        min-height: 50px;
+        padding: 0 14px;
+        border-radius: 14px;
+        color: #c8d7f2 !important;
+        text-decoration: none !important;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(120, 160, 255, 0.16);
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+        .nav-item:hover,
+        .nav-item.active {
+            transform: translateX(2px);
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.35), rgba(111, 66, 193, 0.32));
+            border-color: rgba(80, 160, 255, 0.75);
+            color: #ffffff !important;
+            box-shadow: 0 0 24px rgba(13, 110, 253, 0.25);
+        }
+
+    .nav-danger {
+        color: #ff9bad !important;
+    }
+
+    .nav-beta {
+        margin-left: auto;
+        font-size: 11px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgba(111, 66, 193, 0.25);
+        border: 1px solid rgba(111, 66, 193, 0.55);
+    }
+
+    .sidebar-footer {
+        margin-top: 40px;
+        display: grid;
+        gap: 14px;
+    }
+
+    .system-card,
+    .admin-card {
+        padding: 15px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(120, 160, 255, 0.16);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .system-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        border-radius: 50%;
+        background: #32d583;
+        box-shadow: 0 0 14px rgba(50, 213, 131, 0.8);
+    }
+
+    .admin-card {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .admin-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #0d6efd, #6f42c1);
+        font-weight: 800;
+        color: #ffffff;
+    }
+
+        .admin-avatar.small {
+            width: 34px;
+            height: 34px;
+            font-size: 13px;
+        }
+
+    .admin-name {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .admin-email,
+    .system-date,
+    .version-text,
+    .online-text {
+        color: #8fa6c8;
+        font-size: 13px;
+    }
+
+    .version-text {
+        padding-left: 4px;
+    }
+
+    .app-main {
+        min-width: 0;
+        padding: 18px 34px 34px;
+    }
+
+    .app-topbar {
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+    }
+
+    .topbar-search {
+        width: 520px;
+        max-width: 100%;
+        min-width: 320px;
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(120, 160, 255, 0.18);
+    }
+
+        .topbar-search input {
+            width: 100%;
+            background: transparent;
+            border: 0;
+            outline: 0;
+            color: #fff;
+        }
+
+            .topbar-search input::placeholder {
+                color: #8fa6c8;
+            }
+
+        .topbar-search kbd {
+            white-space: nowrap;
+            min-width: 52px;
+            text-align: center;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            color: #d8e8ff;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .topbar-button,
+    .new-order-button {
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.2);
+        background: rgba(255, 255, 255, 0.055);
+        color: #fff;
+        font-weight: 700;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 110px;
+        white-space: nowrap;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+        position: relative;
+    }
+
+    .new-order-button {
+        background: linear-gradient(135deg, #0d6efd, #6f42c1);
+        border-color: rgba(111, 66, 193, 0.7);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -7px;
+        right: -7px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: #ff4d6d;
+        color: #fff;
+        font-size: 11px;
+        display: grid;
+        place-items: center;
+    }
+
+    .topbar-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 170px;
+    }
+
+    .page-hero {
+        position: relative;
+        min-height: 145px;
+        border-radius: 26px;
+        margin-bottom: 22px;
+        overflow: hidden;
+        background: linear-gradient(90deg, rgba(5, 15, 34, 0.92), rgba(5, 15, 34, 0.45)), url("/images/garage-bg.jpg") center / cover no-repeat;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .page-hero-content {
+        position: relative;
+        z-index: 1;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .page-hero h1 {
+        margin: 0;
+        font-size: 38px;
+        line-height: 1.05;
+        font-weight: 850;
+        color: #ffffff;
+    }
+
+    .page-hero p {
+        color: #c9d8f5;
+        max-width: 560px;
+        font-size: 16px;
+        line-height: 1.45;
+        margin-top: 10px;
+    }
+
+    .hero-stats {
+        display: flex;
+        gap: 14px;
+    }
+
+    .hero-stat-card {
+        width: 155px;
+        min-height: 92px;
+        padding: 15px;
+        border-radius: 18px;
+        background: rgba(6, 19, 38, 0.72);
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .stat-label {
+        color: #8fa6c8;
+        font-size: 13px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 850;
+        color: #ffffff;
+    }
+
+    .stat-positive {
+        color: #32d583;
+        font-size: 12px;
+    }
+
+    .content-surface {
+        min-width: 0;
+    }
+
+    .card {
+        background: rgba(12, 31, 60, 0.78) !important;
+        color: #f4f7ff !important;
+        border: 1px solid rgba(120, 160, 255, 0.18) !important;
+        border-radius: 22px !important;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    .card-header {
+        background: rgba(13, 110, 253, 0.12) !important;
+        border-bottom: 1px solid rgba(120, 160, 255, 0.18) !important;
+        border-radius: 22px 22px 0 0 !important;
+    }
+
+    .form-label {
+        color: #d7e3ff;
+        font-weight: 700;
+    }
+
+    .form-control,
+    .form-select {
+        background-color: rgba(4, 15, 32, 0.78) !important;
+        color: #f4f7ff !important;
+        border: 1px solid rgba(120, 160, 255, 0.22) !important;
+        border-radius: 12px !important;
+    }
+
+        .form-control::placeholder {
+            color: #8fa6c8;
+        }
+
+        .form-select option {
+            background: #0b1730 !important;
+            color: #f4f7ff !important;
+        }
+
+            .form-select option:checked {
+                background: #0d6efd !important;
+                color: #ffffff !important;
+            }
+
+    .table {
+        color: #f4f7ff !important;
+        --bs-table-color: #f4f7ff;
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+        --bs-table-hover-bg: rgba(13, 110, 253, 0.09);
+    }
+
+        .table thead th {
+            background: rgba(6, 19, 38, 0.9) !important;
+            color: #e9f2ff !important;
+        }
+
+        .table td,
+        .table th {
+            border-color: rgba(120, 160, 255, 0.15) !important;
+        }
+
+    .alert-secondary {
+        background: rgba(13, 110, 253, 0.12) !important;
+        color: #e9f2ff !important;
+        border-color: rgba(120, 160, 255, 0.18) !important;
+    }
+
+    .alert-info {
+        background: rgba(13, 110, 253, 0.12) !important;
+        color: #d8e8ff !important;
+        border-color: rgba(120, 160, 255, 0.18) !important;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #0d6efd, #6f42c1) !important;
+        border-color: rgba(111, 66, 193, 0.7) !important;
+    }
+
+    .btn-outline-secondary,
+    .btn-outline-primary,
+    .btn-outline-dark {
+        color: #d8e8ff !important;
+        border-color: rgba(120, 160, 255, 0.28) !important;
+    }
+
+    .btn-danger {
+        background: rgba(255, 77, 109, 0.18) !important;
+        border-color: rgba(255, 77, 109, 0.45) !important;
+        color: #ffb8c5 !important;
+    }
+
+    /* HOME PAGE */
+
+    .home-page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        display: grid;
+        gap: 22px;
+    }
+
+    .home-welcome-card {
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(31, 42, 58, 0.92), rgba(18, 27, 43, 0.94));
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+        padding: 34px 48px;
+    }
+
+    .home-welcome-content {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .welcome-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 22px;
+        display: grid;
+        place-items: center;
+        font-size: 34px;
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.35), rgba(111, 66, 193, 0.35));
+        border: 1px solid rgba(120, 160, 255, 0.3);
+        box-shadow: 0 0 28px rgba(13, 110, 253, 0.25);
+    }
+
+    .home-welcome-card h2 {
+        margin: 0;
+        font-size: 42px;
+        line-height: 1.1;
+        font-weight: 850;
+        color: #ffffff;
+    }
+
+    .home-welcome-card p {
+        margin: 16px 0 0;
+        color: #d3def7;
+        font-size: 18px;
+    }
+
+    .welcome-actions {
+        margin-top: 24px;
+        display: flex;
+        gap: 16px;
+    }
+
+    .home-primary-button,
+    .home-warning-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 0 22px;
+        border-radius: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        transition: 0.2s ease;
+    }
+
+    .home-primary-button {
+        color: #ffffff;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        box-shadow: 0 12px 24px rgba(34, 197, 94, 0.18);
+    }
+
+    .home-warning-button {
+        color: #111827;
+        background: linear-gradient(135deg, #fbbf24, #facc15);
+        box-shadow: 0 12px 24px rgba(251, 191, 36, 0.18);
+    }
+
+        .home-primary-button:hover,
+        .home-warning-button:hover,
+        .home-shortcut-card:hover {
+            transform: translateY(-2px);
+        }
+
+    .home-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(220px, 1fr));
+        gap: 22px;
+    }
+
+    .home-stat-card,
+    .home-average-card,
+    .home-chart-card,
+    .home-shortcut-card,
+    .home-features-card {
+        background: rgba(24, 40, 68, 0.9);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        border-radius: 20px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+    }
+
+    .home-stat-card {
+        min-height: 104px;
+        padding: 22px;
+        text-align: center;
+        display: grid;
+        place-items: center;
+    }
+
+    .home-stat-label {
+        color: #9fb3d9;
+        font-size: 15px;
+    }
+
+    .home-stat-card strong {
+        display: block;
+        margin-top: 8px;
+        color: #ffffff;
+        font-size: 32px;
+        line-height: 1;
+    }
+
+    .home-average-card {
+        padding: 24px;
+    }
+
+        .home-average-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 32px;
+            color: #ffffff;
+        }
+
+    .home-chart-card {
+        padding: 22px;
+    }
+
+    .section-header h3 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .section-header p {
+        margin: 6px 0 0;
+        color: #9fb3d9;
+    }
+
+    .chart-shell {
+        margin-top: 18px;
+        height: 330px;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(7, 19, 38, 0.92);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        overflow: hidden;
+    }
+
+        .chart-shell canvas,
+        #statusChart {
+            background: transparent !important;
+            border-radius: 16px;
+        }
+
+    .home-shortcuts-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .home-shortcut-card {
+        min-height: 150px;
+        padding: 24px;
+        color: #ffffff;
+        text-decoration: none;
+        transition: 0.2s ease;
+    }
+
+    .shortcut-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(13, 110, 253, 0.18);
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        margin-bottom: 16px;
+        font-size: 24px;
+    }
+
+    .home-shortcut-card h4 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .home-shortcut-card p {
+        margin: 8px 0 0;
+        color: #9fb3d9;
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .home-features-card {
+        padding: 24px;
+    }
+
+        .home-features-card h3 {
+            margin: 0 0 18px;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+    .features-list {
+        display: grid;
+        gap: 12px;
+    }
+
+        .features-list div {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(7, 19, 38, 0.42);
+            border: 1px solid rgba(120, 160, 255, 0.1);
+            color: #d8e8ff;
+        }
+
+    /* REPAIR REQUESTS PAGE */
+
+    .repair-page {
+        width: 100%;
+        display: grid;
+        gap: 24px;
+    }
+
+    .repair-workspace,
+    .requests-section {
+        background: rgba(24, 40, 68, 0.9);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    .repair-section-header,
+    .requests-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 22px;
+        margin-bottom: 22px;
+    }
+
+    .section-kicker {
+        color: #6fb4ff;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .repair-section-header h2,
+    .requests-header h2 {
+        margin: 4px 0 0;
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 850;
+    }
+
+    .repair-section-header p {
+        margin: 8px 0 0;
+        color: #9fb3d9;
+    }
+
+    .repair-step-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 999px;
+        background: rgba(13, 110, 253, 0.16);
+        border: 1px solid rgba(120, 160, 255, 0.24);
+        color: #d8e8ff;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+        .repair-step-pill span {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+        }
+
+    .repair-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 370px;
+        gap: 22px;
+        align-items: start;
+    }
+
+    .repair-main-card,
+    .repair-summary-card {
+        background: rgba(7, 19, 38, 0.62);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        border-radius: 22px;
+        padding: 22px;
+    }
+
+    .repair-card-title,
+    .summary-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+        .repair-card-title span,
+        .summary-title span {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: rgba(13, 110, 253, 0.18);
+            border: 1px solid rgba(120, 160, 255, 0.22);
+        }
+
+        .repair-card-title h3,
+        .summary-title h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 850;
+        }
+
+        .summary-title p {
+            margin: 2px 0 0;
+            color: #9fb3d9;
+            font-size: 13px;
+        }
+
+    .repair-form-grid {
+        display: grid;
+        gap: 18px;
+    }
+
+        .repair-form-grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .repair-form-grid.four {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+    .repair-divider {
+        height: 1px;
+        margin: 24px 0;
+        background: rgba(120, 160, 255, 0.14);
+    }
+
+    .damage-type-row {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .damage-chip {
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        background: rgba(255, 255, 255, 0.045);
+        color: #d8e8ff;
+        font-weight: 700;
+    }
+
+    .upload-panel {
+        display: flex;
+        gap: 18px;
+        padding: 22px;
+        border-radius: 20px;
+        border: 1px dashed rgba(120, 160, 255, 0.35);
+        background: rgba(13, 110, 253, 0.08);
+    }
+
+    .upload-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: rgba(13, 110, 253, 0.2);
+        font-size: 26px;
+    }
+
+    .upload-content {
+        display: grid;
+        gap: 8px;
+        flex: 1;
+    }
+
+        .upload-content strong {
+            color: #ffffff;
+        }
+
+        .upload-content span {
+            color: #9fb3d9;
+        }
+
+    .repair-summary-card {
+        position: sticky;
+        top: 18px;
+    }
+
+    .summary-price {
+        margin: 20px 0;
+        color: #32d583;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+    }
+
+    .summary-breakdown {
+        display: grid;
+        gap: 12px;
+    }
+
+        .summary-breakdown div,
+        .summary-empty,
+        .summary-hint {
+            padding: 13px 14px;
+            border-radius: 14px;
+            background: rgba(24, 40, 68, 0.72);
+            border: 1px solid rgba(120, 160, 255, 0.1);
+        }
+
+        .summary-breakdown div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .summary-breakdown span,
+        .summary-empty,
+        .summary-hint span {
+            color: #9fb3d9;
+        }
+
+        .summary-breakdown strong {
+            color: #ffffff;
+        }
+
+    .summary-total-row {
+        border-color: rgba(50, 213, 131, 0.28) !important;
+    }
+
+        .summary-total-row strong {
+            color: #32d583;
+        }
+
+    .summary-error {
+        margin-top: 14px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        color: #ffd7df;
+        background: rgba(255, 77, 109, 0.12);
+        border: 1px solid rgba(255, 77, 109, 0.28);
+    }
+
+    .summary-actions {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .summary-hint {
+        margin-top: 18px;
+        display: grid;
+        gap: 4px;
+    }
+
+        .summary-hint strong {
+            color: #ffffff;
+        }
+
+    .requests-filters {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) 180px auto auto;
+        gap: 12px;
+        align-items: center;
+        min-width: 720px;
+    }
+
+    .requests-section .table-responsive-mobile {
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    @@media (max-width: 1300px) {
+        .repair-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .repair-summary-card {
+            position: static;
+        }
+
+        .requests-header {
+            flex-direction: column;
+        }
+
+        .requests-filters {
+            min-width: 0;
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .home-stats-grid,
+        .home-shortcuts-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-welcome-content {
+            align-items: flex-start;
+        }
+
+        .home-welcome-card h2 {
+            font-size: 34px;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .repair-form-grid.three,
+        .repair-form-grid.four,
+        .requests-filters {
+            grid-template-columns: 1fr;
+        }
+
+        .repair-section-header {
+            flex-direction: column;
+        }
+
+        .upload-panel {
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 700px) {
+        .app-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .app-sidebar {
+            position: relative;
+            min-height: auto;
+        }
+
+        .app-topbar {
+            height: auto;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .topbar-actions {
+            flex-wrap: wrap;
+        }
+
+        .page-hero-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .hero-stats {
+            flex-wrap: wrap;
+        }
+
+        .home-stats-grid,
+        .home-shortcuts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .home-welcome-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .welcome-actions {
+            flex-direction: column;
+        }
+    }
+    .damage-map-panel {
+    margin-top: 22px;
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(24, 40, 68, 0.58);
+    border: 1px solid rgba(120, 160, 255, 0.14);
+}
+
+.damage-map-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.damage-map-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 850;
+}
+
+.damage-map-header p {
+    margin: 6px 0 0;
+    color: #9fb3d9;
+}
+
+.selected-damage-info {
+    min-width: 210px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(7, 19, 38, 0.64);
+    border: 1px solid rgba(120, 160, 255, 0.14);
+}
+
+.selected-damage-info span {
+    display: block;
+    color: #9fb3d9;
+    font-size: 13px;
+}
+
+.selected-damage-info strong {
+    display: block;
+    margin-top: 4px;
+    color: #32d583;
+}
+
+.body-type-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.body-type-tab {
+    min-height: 42px;
+    padding: 0 15px;
+    border-radius: 14px;
+    color: #d8e8ff;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(120, 160, 255, 0.16);
+    font-weight: 800;
+}
+
+.body-type-tab.active {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.38), rgba(111, 66, 193, 0.34));
+    border-color: rgba(80, 160, 255, 0.75);
+    color: #ffffff;
+    box-shadow: 0 0 22px rgba(13, 110, 253, 0.25);
+}
+
+.damage-map-layout {
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+}
+
+.damage-parts-list {
+    display: grid;
+    gap: 10px;
+}
+
+.damage-part-item {
+    min-height: 44px;
+    padding: 0 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    border-radius: 14px;
+    color: #d8e8ff;
+    background: rgba(7, 19, 38, 0.52);
+    border: 1px solid rgba(120, 160, 255, 0.12);
+    font-weight: 700;
+}
+
+.damage-part-item:hover,
+.damage-part-item.active {
+    background: rgba(13, 110, 253, 0.18);
+    border-color: rgba(80, 160, 255, 0.65);
+    color: #ffffff;
+}
+
+.part-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+.part-dot.front { background: #ef4444; }
+.part-dot.hood { background: #8b5cf6; }
+.part-dot.fender { background: #1e8bff; }
+.part-dot.door { background: #22c55e; }
+.part-dot.light { background: #facc15; }
+.part-dot.sill { background: #14b8a6; }
+.part-dot.trunk { background: #f97316; }
+.part-dot.rear { background: #fb7185; }
+
+.vehicle-map-card {
+    min-height: 520px;
+    padding: 18px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at center, rgba(13, 110, 253, 0.14), transparent 45%),
+        rgba(7, 19, 38, 0.62);
+    border: 1px solid rgba(120, 160, 255, 0.14);
+}
+
+.vehicle-map-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #9fb3d9;
+    margin-bottom: 12px;
+}
+
+.vehicle-map-toolbar strong {
+    color: #ffffff;
+}
+
+.vehicle-blueprint {
+    min-height: 430px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background:
+        linear-gradient(rgba(120, 160, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 160, 255, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    border: 1px solid rgba(120, 160, 255, 0.1);
+}
+
+.vehicle-outline {
+    position: relative;
+    width: 310px;
+    height: 390px;
+    border-radius: 130px 130px 70px 70px;
+    border: 2px solid rgba(216, 232, 255, 0.55);
+    background:
+        linear-gradient(180deg, rgba(120, 160, 255, 0.08), rgba(13, 110, 253, 0.03));
+    box-shadow:
+        inset 0 0 35px rgba(13, 110, 253, 0.18),
+        0 0 35px rgba(13, 110, 253, 0.12);
+}
+
+.vehicle-outline::before {
+    content: "";
+    position: absolute;
+    left: 74px;
+    top: 135px;
+    width: 162px;
+    height: 145px;
+    border-radius: 42px;
+    border: 1px solid rgba(216, 232, 255, 0.35);
+    background: rgba(216, 232, 255, 0.035);
+}
+
+.vehicle-outline::after {
+    content: "";
+    position: absolute;
+    left: 82px;
+    top: 78px;
+    width: 146px;
+    height: 42px;
+    border-radius: 26px;
+    border: 1px solid rgba(216, 232, 255, 0.26);
+    background: rgba(216, 232, 255, 0.04);
+}
+
+.map-zone {
+    position: absolute;
+    border: 1px solid rgba(120, 160, 255, 0.18);
+    color: #d8e8ff;
+    background: rgba(13, 110, 253, 0.12);
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: 0.18s ease;
+}
+
+.map-zone:hover {
+    transform: scale(1.03);
+    border-color: rgba(50, 213, 131, 0.7);
+    background: rgba(50, 213, 131, 0.16);
+    color: #ffffff;
+}
+
+.map-zone.active {
+    border-color: rgba(50, 213, 131, 0.95);
+    background: rgba(50, 213, 131, 0.28);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(50, 213, 131, 0.28);
+}
+
+.zone-front-bumper {
+    left: 68px;
+    top: 12px;
+    width: 174px;
+    height: 34px;
+}
+
+.zone-headlight-left {
+    left: 48px;
+    top: 50px;
+    width: 46px;
+    height: 28px;
+    background: rgba(250, 204, 21, 0.22);
+}
+
+.zone-headlight-right {
+    right: 48px;
+    top: 50px;
+    width: 46px;
+    height: 28px;
+    background: rgba(250, 204, 21, 0.22);
+}
+
+.zone-hood {
+    left: 82px;
+    top: 82px;
+    width: 146px;
+    height: 72px;
+    background: rgba(139, 92, 246, 0.16);
+}
+
+.zone-fender-left {
+    left: 18px;
+    top: 92px;
+    width: 58px;
+    height: 92px;
+    background: rgba(30, 139, 255, 0.14);
+}
+
+.zone-fender-right {
+    right: 18px;
+    top: 92px;
+    width: 58px;
+    height: 92px;
+    background: rgba(30, 139, 255, 0.14);
+}
+
+.zone-door-left {
+    left: 18px;
+    top: 198px;
+    width: 64px;
+    height: 118px;
+    background: rgba(34, 197, 94, 0.14);
+}
+
+.zone-door-right {
+    right: 18px;
+    top: 198px;
+    width: 64px;
+    height: 118px;
+    background: rgba(34, 197, 94, 0.14);
+}
+
+.zone-sill-left {
+    left: -8px;
+    top: 190px;
+    width: 18px;
+    height: 138px;
+    background: rgba(20, 184, 166, 0.22);
+}
+
+.zone-sill-right {
+    right: -8px;
+    top: 190px;
+    width: 18px;
+    height: 138px;
+    background: rgba(20, 184, 166, 0.22);
+}
+
+.zone-trunk {
+    left: 82px;
+    bottom: 64px;
+    width: 146px;
+    height: 58px;
+    background: rgba(249, 115, 22, 0.16);
+}
+
+.zone-rear-bumper {
+    left: 66px;
+    bottom: 16px;
+    width: 178px;
+    height: 34px;
+    background: rgba(251, 113, 133, 0.18);
+}
+
+.damage-map-legend {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    color: #9fb3d9;
+    font-size: 13px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.legend-dot.selected { background: #32d583; }
+.legend-dot.available { background: #1e8bff; }
+.legend-dot.hover { background: #facc15; }
+
+.damage-chip.active {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.38), rgba(111, 66, 193, 0.34));
+    border-color: rgba(80, 160, 255, 0.75);
+    color: #ffffff;
+}
+
+@@media (max-width: 1100px) {
+    .damage-map-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .vehicle-map-card {
+        min-height: auto;
+    }
+}
+/* REAL SVG DAMAGE MAP */
+
+.real-blueprint {
+    min-height: 560px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background:
+        linear-gradient(rgba(120, 160, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 160, 255, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    border: 1px solid rgba(120, 160, 255, 0.1);
+    overflow: hidden;
+}
+
+.vehicle-svg {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    filter: drop-shadow(0 0 18px rgba(13, 110, 253, 0.14));
+}
+
+.vehicle-shell {
+    fill: url(#bodyGlow);
+    stroke: rgba(214, 232, 255, 0.58);
+    stroke-width: 2.4;
+}
+
+.vehicle-glass {
+    fill: rgba(180, 215, 255, 0.08);
+    stroke: rgba(214, 232, 255, 0.25);
+    stroke-width: 1.2;
+}
+
+.vehicle-axis {
+    stroke: rgba(214, 232, 255, 0.12);
+    stroke-width: 1.2;
+    stroke-dasharray: 6 8;
+}
+
+.svg-zone {
+    cursor: pointer;
+    transition: 0.18s ease;
+    stroke-width: 1.2;
+}
+
+.svg-zone:hover {
+    filter: brightness(1.15);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.svg-zone.active {
+    stroke: #32d583 !important;
+    stroke-width: 2.2;
+    filter: drop-shadow(0 0 10px rgba(50, 213, 131, 0.34));
+}
+
+.zone-front {
+    fill: rgba(239, 68, 68, 0.22);
+    stroke: rgba(239, 68, 68, 0.52);
+}
+
+.zone-light {
+    fill: rgba(250, 204, 21, 0.22);
+    stroke: rgba(250, 204, 21, 0.55);
+}
+
+.zone-hood {
+    fill: rgba(139, 92, 246, 0.18);
+    stroke: rgba(139, 92, 246, 0.48);
+}
+
+.zone-fender {
+    fill: rgba(30, 139, 255, 0.17);
+    stroke: rgba(30, 139, 255, 0.48);
+}
+
+.zone-door {
+    fill: rgba(34, 197, 94, 0.16);
+    stroke: rgba(34, 197, 94, 0.46);
+}
+
+.zone-sill {
+    fill: rgba(20, 184, 166, 0.18);
+    stroke: rgba(20, 184, 166, 0.46);
+}
+
+.zone-trunk {
+    fill: rgba(249, 115, 22, 0.18);
+    stroke: rgba(249, 115, 22, 0.52);
+}
+
+.zone-rear {
+    fill: rgba(251, 113, 133, 0.18);
+    stroke: rgba(251, 113, 133, 0.52);
+}
+
+.svg-zone-label {
+    fill: #e9f2ff;
+    font-size: 13px;
+    font-weight: 800;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.svg-zone-label.small {
+    font-size: 12px;
+}
+
+@@media (max-width: 1100px) {
+    .real-blueprint {
+        min-height: 500px;
+    }
+
+    .vehicle-svg {
+        max-width: 360px;
+    }
+}
+
+    /* TOPBAR ACTIONS / NOTIFICATIONS / SYSTEM MODAL */
+
+    .top-action-button {
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        background: rgba(24, 40, 68, 0.76);
+        color: #ffffff;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: 0.18s ease;
+        white-space: nowrap;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+        position: relative;
+    }
+
+    .top-action-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(80, 160, 255, 0.65);
+        background: rgba(31, 54, 91, 0.95);
+    }
+
+    .new-request-button {
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+        border-color: rgba(129, 140, 248, 0.8);
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25);
+    }
+
+    .new-request-button:hover {
+        background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+    }
+
+    .system-button {
+        min-width: 132px;
+    }
+
+    .system-button-icon {
+        font-size: 16px;
+        color: #dbeafe;
+    }
+
+    .notification-wrapper {
+        position: relative;
+    }
+
+    .notification-button {
+        min-width: 66px;
+    }
+
+    .notification-count {
+        position: absolute;
+        top: -7px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ff4d6d;
+        color: #ffffff;
+        font-size: 12px;
+        display: grid;
+        place-items: center;
+        border: 2px solid #0b1220;
+    }
+
+    .notifications-dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 12px);
+        width: 320px;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(7, 19, 38, 0.98);
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
+        z-index: 1000;
+    }
+
+    .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        color: #ffffff;
+    }
+
+    .notifications-header span {
+        color: #9fb3d9;
+        font-size: 13px;
+    }
+
+    .notification-empty {
+        padding: 14px;
+        border-radius: 14px;
+        color: #9fb3d9;
+        background: rgba(255, 255, 255, 0.035);
+    }
+
+    .notification-item {
+        width: 100%;
+        padding: 12px;
+        border: 0;
+        border-radius: 14px;
+        background: rgba(24, 40, 68, 0.72);
+        color: #ffffff;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        text-align: left;
+        margin-top: 8px;
+    }
+
+    .notification-item:hover {
+        background: rgba(37, 99, 235, 0.22);
+    }
+
+    .notification-item small {
+        display: block;
+        margin-top: 3px;
+        color: #9fb3d9;
+    }
+
+    .notification-dot {
+        width: 10px;
+        height: 10px;
+        margin-top: 5px;
+        border-radius: 50%;
+        background: #32d583;
+        flex: 0 0 auto;
+    }
+
+    .notification-dot.warning {
+        background: #facc15;
+    }
+
+    .system-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(3, 12, 27, 0.74);
+        backdrop-filter: blur(8px);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+    }
+
+    .system-modal {
+        width: min(680px, 100%);
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at top left, rgba(37, 99, 235, 0.20), transparent 42%),
+            rgba(7, 19, 38, 0.98);
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+        overflow: hidden;
+    }
+
+    .system-modal-header {
+        padding: 22px 24px;
+        border-bottom: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+    .modal-kicker {
+        color: #9fb3d9;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .system-modal-header h3 {
+        margin: 5px 0 0;
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 900;
+    }
+
+    .system-modal-close {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+        color: #ffffff;
+        font-size: 26px;
+        line-height: 1;
+    }
+
+    .system-modal-body {
+        padding: 24px;
+    }
+
+    .system-info-card {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(24, 40, 68, 0.72);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .system-info-card > span {
+    flex: 0 0 auto;
+}
+
+    .system-info-card strong {
+        color: #ffffff;
+    }
+
+    .system-info-card p {
+        margin: 4px 0 0;
+        color: #9fb3d9;
+    }
+
+    .system-info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .system-info-grid div {
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+    }
+
+    .system-info-grid span {
+        display: block;
+        color: #9fb3d9;
+        font-size: 12px;
+    }
+
+    .system-info-grid strong {
+        display: block;
+        margin-top: 5px;
+        color: #ffffff;
+    }
+
+    .system-features {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(24, 40, 68, 0.54);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+    }
+
+    .system-features strong {
+        color: #ffffff;
+    }
+
+    .system-features ul {
+        margin: 10px 0 0;
+        color: #cfe0ff;
+    }
+
+    .system-features li {
+        margin-bottom: 6px;
+    }
+
+    .system-modal-footer {
+        padding: 18px 24px;
+        border-top: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        justify-content: flex-end;
+    }
+    .topbar-spacer {
+    flex: 1;
+}
+/* ===== APP ICONS: NO EMOJI STYLE ===== */
+
+.app-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    color: #dbeafe;
+}
+
+.app-icon svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.app-icon-box {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(124, 58, 237, 0.82));
+    border: 1px solid rgba(147, 197, 253, 0.28);
+    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
+    color: #ffffff;
+}
+
+.app-icon-box svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-icon {
+    width: 22px;
+    height: 22px;
+    display: inline-grid;
+    place-items: center;
+    color: #93c5fd;
+}
+
+.nav-icon svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-item.active .nav-icon,
+.nav-item:hover .nav-icon {
+    color: #ffffff;
+}
+
+.system-button {
+    min-width: 142px;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 15px;
+    border: 1px solid rgba(147, 197, 253, 0.28);
+    background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(124, 58, 237, 0.12)),
+        rgba(24, 40, 68, 0.82);
+    color: #ffffff;
+    font-weight: 850;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: 0.18s ease;
+}
+
+.system-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(80, 160, 255, 0.75);
+    background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(124, 58, 237, 0.18)),
+        rgba(31, 54, 91, 0.96);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+}
+
+.system-button .app-icon {
+    width: 20px;
+    height: 20px;
+    color: #bfdbfe;
+}
+.system-info-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: #bfdbfe;
+    background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.26), rgba(124, 58, 237, 0.18)),
+        rgba(13, 110, 253, 0.12);
+    border: 1px solid rgba(147, 197, 253, 0.22);
+}
+
+.system-info-icon svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+</style>
+
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <div class="brand-block">
+            <div class="app-icon-box">
+    <svg viewBox="0 0 24 24">
+        <path d="M4 13l2-5h12l2 5" />
+        <path d="M5 13h14v5H5z" />
+        <path d="M7 18v1" />
+        <path d="M17 18v1" />
+        <circle cx="8" cy="18" r="2" />
+        <circle cx="16" cy="18" r="2" />
+    </svg>
+</div>
+            <div>
+                <div class="brand-title">AutoEstimate</div>
+                <div class="brand-subtitle">Платформа оценки ремонта</div>
             </div>
-
         </div>
 
-        <article class="content px-4">
+        <nav class="sidebar-nav">
+            <NavLink href="/" Match="NavLinkMatch.All" class="nav-item">
+                <span class="nav-icon">
+    <svg viewBox="0 0 24 24">
+        <path d="M3 11l9-7 9 7" />
+        <path d="M5 10v10h14V10" />
+        <path d="M9 20v-6h6v6" />
+    </svg>
+</span>
+                <span>Главная</span>
+            </NavLink>
+
+            <NavLink href="/repair-requests" class="nav-item">
+                <span class="nav-icon">
+    <svg viewBox="0 0 24 24">
+        <path d="M4 13l2-5h12l2 5" />
+        <path d="M5 13h14v5H5z" />
+        <circle cx="8" cy="18" r="2" />
+        <circle cx="16" cy="18" r="2" />
+    </svg>
+</span>
+                <span>Оценка ремонта ДТП</span>
+            </NavLink>
+
+            @if (UserState.CanManagePrices)
+            {
+                <NavLink href="/prices" class="nav-item">
+                    <span class="nav-icon">
+    <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05a1.8 1.8 0 0 0-2-.36" />
+        <path d="M9 19.4a1.8 1.8 0 0 0-2 .36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05a1.8 1.8 0 0 0 .36-2" />
+        <path d="M4.6 9a1.8 1.8 0 0 0-.36-2l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05a1.8 1.8 0 0 0 2 .36" />
+        <path d="M15 4.6a1.8 1.8 0 0 0 2-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05a1.8 1.8 0 0 0-.36 2" />
+    </svg>
+</span>
+                    <span>Админка: прайс ремонта</span>
+                </NavLink>
+            }
+
+            <NavLink href="/login" class="nav-item nav-danger">
+                <span class="nav-icon">
+    <svg viewBox="0 0 24 24">
+        <rect x="5" y="10" width="14" height="10" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        <path d="M12 14v3" />
+    </svg>
+</span>
+                <span>Вход администратора</span>
+            </NavLink>
+
+            <NavLink href="/ai-damage" class="nav-item">
+                <span class="nav-icon">
+    <svg viewBox="0 0 24 24">
+        <rect x="6" y="7" width="12" height="11" rx="3" />
+        <path d="M9 7V4" />
+        <path d="M15 7V4" />
+        <circle cx="10" cy="12" r="1" />
+        <circle cx="14" cy="12" r="1" />
+        <path d="M10 16h4" />
+    </svg>
+</span>
+                <span>AI-оценка повреждений</span>
+                <span class="nav-beta">BETA</span>
+            </NavLink>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="system-card">
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    <span>Система активна</span>
+                </div>
+
+                <div class="system-date">
+                    @DateTime.Now.ToString("dd.MM.yyyy, HH:mm")
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-avatar">@CurrentUserInitials</div>
+
+                <div>
+                    <div class="admin-name">@CurrentUserRole</div>
+                    <div class="admin-email">@CurrentUserEmail</div>
+                </div>
+            </div>
+
+            <div class="version-text">v 1.0.1a</div>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        <header class="app-topbar">
+            <div class="topbar-spacer"></div>
+
+            <div class="topbar-actions">
+                @if (UserState.CanSeeNotifications)
+                {
+                    <div class="notification-wrapper">
+                        <button type="button"
+                                class="top-action-button notification-button"
+                                @onclick="ToggleNotifications">
+                            <span class="app-icon">
+    <svg viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M10 21h4" />
+    </svg>
+</span>
+
+                            @if (NotificationCount > 0)
+                            {
+                                <span class="notification-count">@NotificationCount</span>
+                            }
+                        </button>
+
+                        @if (showNotifications)
+                        {
+                            <div class="notifications-dropdown">
+                                <div class="notifications-header">
+                                    <strong>Уведомления</strong>
+                                    <span>@NotificationCount новых</span>
+                                </div>
+
+                                @if (NotificationCount == 0)
+                                {
+                                    <div class="notification-empty">
+                                        Новых уведомлений нет.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="notification-item"
+                                            @onclick="GoToRequests">
+                                        <span class="notification-dot"></span>
+                                        <div>
+                                            <strong>Новые заявки</strong>
+                                            <small>Количество новых заявок: @stats.NewRequestsCount</small>
+                                        </div>
+                                    </button>
+
+                                    <button type="button"
+                                            class="notification-item"
+                                            @onclick="GoToRequests">
+                                        <span class="notification-dot warning"></span>
+                                        <div>
+                                            <strong>В обработке</strong>
+                                            <small>Заявок в обработке: @stats.InProgressCount</small>
+                                        </div>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <button type="button"
+        class="system-button"
+        @onclick="OpenSystemModal">
+    <span class="app-icon">
+        <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 10v6" />
+            <path d="M12 7h.01" />
+        </svg>
+    </span>
+    <span>О системе</span>
+</button>
+
+                <button type="button"
+        class="top-action-button new-request-button"
+        @onclick="GoToNewRequest">
+    <span class="app-icon">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+        </svg>
+    </span>
+    <span>Новая заявка</span>
+</button>
+
+                <div class="topbar-user">
+                    <div class="admin-avatar small">@CurrentUserInitials</div>
+
+                    <div>
+                        <div class="admin-name">@CurrentUserRole</div>
+                        <div class="online-text">
+                            @(UserState.IsLoggedIn ? "Онлайн" : "Гость")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="page-hero">
+            <div class="page-hero-overlay"></div>
+
+            <div class="page-hero-content">
+                <div>
+                    <h1>Оценка ремонта ДТП</h1>
+                    <p>
+                        Выберите автомобиль, отметьте повреждения
+                        и получите предварительную калькуляцию ремонта.
+                    </p>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="hero-stat-card">
+                        <div class="stat-label">В работе</div>
+                        <div class="stat-value">@stats.InProgressCount</div>
+                        <div class="stat-positive">+8 за сегодня</div>
+                    </div>
+
+                    <div class="hero-stat-card">
+                        <div class="stat-label">Новых заявок</div>
+                        <div class="stat-value">@stats.NewRequestsCount</div>
+                        <div class="stat-positive">+8 за сегодня</div>
+                    </div>
+
+                    <div class="hero-stat-card">
+                        <div class="stat-label">Средний чек</div>
+                        <div class="stat-value">@stats.AverageCheck.ToString("N0") ₽</div>
+                        <div class="stat-positive">+5,2% к неделе</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-surface">
             @Body
-        </article>
+        </section>
     </main>
 </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+@if (showSystemModal)
+{
+    <div class="system-modal-backdrop" @onclick="CloseSystemModal">
+        <div class="system-modal" @onclick:stopPropagation="true">
+            <div class="system-modal-header">
+                <div>
+                    <span class="modal-kicker">AutoEstimate</span>
+                    <h3>О системе</h3>
+                </div>
+
+                <button type="button"
+                        class="system-modal-close"
+                        @onclick="CloseSystemModal">
+                    ×
+                </button>
+            </div>
+
+            <div class="system-modal-body">
+                <div class="system-info-card">
+                    <span class="system-info-icon">
+        <svg viewBox="0 0 24 24">
+            <path d="M4 13l2-5h12l2 5" />
+            <path d="M5 13h14v5H5z" />
+            <circle cx="8" cy="18" r="2" />
+            <circle cx="16" cy="18" r="2" />
+        </svg>
+    </span>
+                    <div>
+                        <strong>Назначение</strong>
+                        <p>Система предварительной оценки стоимости кузовного ремонта автомобиля после ДТП.</p>
+                    </div>
+                </div>
+
+                <div class="system-info-grid">
+                    <div>
+                        <span>Версия</span>
+                        <strong>v 2.1.0</strong>
+                    </div>
+
+                    <div>
+                        <span>Роль</span>
+                        <strong>@CurrentUserRole</strong>
+                    </div>
+
+                    <div>
+                        <span>Заявок всего</span>
+                        <strong>@stats.TotalRequestsCount</strong>
+                    </div>
+
+                    <div>
+                        <span>Средний чек</span>
+                        <strong>@stats.AverageCheck.ToString("N0") ₽</strong>
+                    </div>
+                </div>
+
+                <div class="system-features">
+                    <strong>Возможности системы</strong>
+                    <ul>
+                        <li>Расчёт стоимости ремонта по прайс-листу</li>
+                        <li>Выбор нескольких повреждений кузова</li>
+                        <li>Разные схемы кузова автомобиля</li>
+                        <li>Загрузка фото повреждений</li>
+                        <li>Формирование PDF по заявке</li>
+                        <li>Разделение ролей: администратор, оценщик, пользователь</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="system-modal-footer">
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="CloseSystemModal">
+                    Понятно
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    private DashboardStats stats = new();
 
-    private bool isDarkTheme = true;
+    private bool showSystemModal = false;
+    private bool showNotifications = false;
+    
 
-    private async Task ToggleTheme()
+    private int NotificationCount =>
+        UserState.CanSeeNotifications
+            ? stats.NewRequestsCount
+            : 0;
+
+    protected override async Task OnInitializedAsync()
     {
-        isDarkTheme = !isDarkTheme;
+        stats = await StatsService.GetStatsAsync();
+        StatsNotifier.OnChange += RefreshStatsAsync;
+    }
 
-        await JS.InvokeVoidAsync(
-            "toggleTheme",
-            isDarkTheme);
+    private async Task RefreshStatsAsync()
+    {
+        stats = await StatsService.GetStatsAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        StatsNotifier.OnChange -= RefreshStatsAsync;
+    }
+
+    private string CurrentUserName =>
+        string.IsNullOrWhiteSpace(UserState.UserName)
+            ? "Гость"
+            : UserState.UserName;
+
+    private string CurrentUserEmail =>
+        string.IsNullOrWhiteSpace(UserState.Email)
+            ? "Не авторизован"
+            : UserState.Email;
+
+    private string CurrentUserRole =>
+        string.IsNullOrWhiteSpace(UserState.Role)
+            ? "Гость"
+            : UserState.Role;
+
+    private string CurrentUserInitials
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUserName))
+                return "U";
+
+            var parts = CurrentUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length >= 2)
+                return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+
+            return CurrentUserName.Length >= 2
+                ? CurrentUserName[..2].ToUpper()
+                : CurrentUserName[..1].ToUpper();
+        }
+    }
+
+    private void OpenSystemModal()
+    {
+        showSystemModal = true;
+        showNotifications = false;
+    }
+
+    private void CloseSystemModal()
+    {
+        showSystemModal = false;
+    }
+
+    private void ToggleNotifications()
+    {
+        if (!UserState.CanSeeNotifications)
+            return;
+
+        showNotifications = !showNotifications;
+        showSystemModal = false;
+    }
+
+    private void GoToNewRequest()
+    {
+        Navigation.NavigateTo("/repair-requests");
+    }
+
+    private void GoToRequests()
+    {
+        showNotifications = false;
+        Navigation.NavigateTo("/repair-requests");
     }
 }

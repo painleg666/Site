@@ -7,208 +7,1637 @@
 @using QuestPDF.Fluent
 @using QuestPDF.Helpers
 @using QuestPDF.Infrastructure
+@using System.IO
 
+@inject DashboardStatsNotifier StatsNotifier
 @inject IWebHostEnvironment Env
 @inject AppDbContext Db
+@inject AppUserState UserState
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject PendingAiDamageState PendingAiDamageState
+<style>
+    /* ===== DAMAGE MAP: SELECTED PARTS ===== */
 
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3 class="mb-0">Оценка стоимости кузовного ремонта после ДТП</h3>
+    .part-dot.rear-fender {
+        background: #38bdf8;
+    }
+
+    .part-dot.door-front {
+        background: #22c55e;
+    }
+
+    .part-dot.door-rear {
+        background: #10b981;
+    }
+
+    .part-dot.light-front {
+        background: #facc15;
+    }
+
+    .part-dot.light-rear {
+        background: #fb7185;
+    }
+
+    .part-check {
+        margin-left: auto;
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #1e8bff;
+        color: #ffffff;
+        font-size: 13px;
+    }
+
+    .selected-damage-info-list {
+        min-width: 260px;
+    }
+
+    .selected-parts-list {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .selected-part-pill {
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(50, 213, 131, 0.32);
+        background: rgba(50, 213, 131, 0.12);
+        color: #d8ffe9;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+        .selected-part-pill span {
+            margin-left: 6px;
+            color: #ffffff;
+        }
+
+    /* ===== REAL VEHICLE UNDERLAY MAP ===== */
+
+    .vehicle-map-card-v2 {
+        overflow: hidden;
+    }
+
+    .real-blueprint-v2 {
+        position: relative;
+        min-height: 700px;
+        padding: 14px;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        background: radial-gradient(circle at center, rgba(59, 130, 246, 0.10), transparent 45%), linear-gradient(rgba(120, 160, 255, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(120, 160, 255, 0.055) 1px, transparent 1px), rgba(3, 12, 27, 0.82);
+        background-size: auto, 34px 34px, 34px 34px, auto;
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        overflow: hidden;
+    }
+
+        .real-blueprint-v2::after {
+            content: "";
+            position: absolute;
+            inset: 6%;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 42%, rgba(3, 12, 27, 0.28) 74%);
+        }
+
+    .blueprint-body-underlay {
+        position: absolute;
+        inset: 0;
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: auto 100%;
+        opacity: 0.50;
+        pointer-events: none;
+        z-index: 1;
+        filter: drop-shadow(0 0 28px rgba(80, 160, 255, 0.34)) saturate(1.18) contrast(1.06);
+    }
+
+        .blueprint-body-underlay.underlay-sedan {
+            background-image: url('/images/body-sedan.png');
+            background-size: auto 100%;
+            background-position: center 50%;
+        }
+
+        .blueprint-body-underlay.underlay-hatchback {
+            background-image: url('/images/body-hatchback.png');
+            background-size: auto 98%;
+            background-position: center 50%;
+        }
+
+        .blueprint-body-underlay.underlay-suv {
+            background-image: url('/images/body-suv.png');
+            background-size: auto 102%;
+            background-position: center 49%;
+        }
+
+        .blueprint-body-underlay.underlay-wagon {
+            background-image: url('/images/body-wagon.png');
+            background-size: auto 102%;
+            background-position: center 49%;
+        }
+
+        .blueprint-body-underlay.underlay-coupe {
+            background-image: url('/images/body-coupe.png');
+            background-size: auto 101%;
+            background-position: center 50%;
+        }
+
+    .vehicle-svg-v2 {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: auto;
+        pointer-events: auto;
+        filter: drop-shadow(0 0 24px rgba(13, 110, 253, 0.18));
+    }
+
+        .vehicle-svg-v2.svg-sedan {
+            max-width: 485px;
+            transform: translateY(0px) scale(1.08);
+            transform-origin: center;
+        }
+
+        .vehicle-svg-v2.svg-hatchback {
+            max-width: 475px;
+            transform: translateY(2px) scale(1.06);
+            transform-origin: center;
+        }
+
+        .vehicle-svg-v2.svg-suv {
+            max-width: 500px;
+            transform: translateY(-2px) scale(1.10);
+            transform-origin: center;
+        }
+
+        .vehicle-svg-v2.svg-wagon {
+            max-width: 495px;
+            transform: translateY(-2px) scale(1.09);
+            transform-origin: center;
+        }
+
+        .vehicle-svg-v2.svg-coupe {
+            max-width: 490px;
+            transform: translateY(2px) scale(1.07);
+            transform-origin: center;
+        }
+
+            .vehicle-svg-v2.svg-coupe .svg-label-v2 {
+                font-size: 12px;
+            }
+
+                .vehicle-svg-v2.svg-coupe .svg-label-v2.small {
+                    font-size: 10px;
+                }
+
+    /* SVG base parts: almost transparent, because PNG underlay is the main visual */
+
+    .vehicle-shadow-v2 {
+        fill: rgba(13, 110, 253, 0.02);
+    }
+
+    .vehicle-shell-v2 {
+        fill: rgba(30, 64, 120, 0.008) !important;
+        stroke: rgba(219, 234, 254, 0.18) !important;
+        stroke-width: 1.4 !important;
+    }
+
+    .vehicle-cabin-v2 {
+        fill: rgba(15, 23, 42, 0.01) !important;
+        stroke: rgba(191, 219, 254, 0.06) !important;
+        stroke-width: 1.2;
+    }
+
+    .vehicle-glass-v2,
+    .vehicle-side-glass-v2 {
+        fill: rgba(147, 197, 253, 0.01) !important;
+        stroke: rgba(191, 219, 254, 0.06) !important;
+        stroke-width: 1.1;
+    }
+
+    .vehicle-axis-v2 {
+        stroke: rgba(219, 234, 254, 0.14);
+        stroke-width: 1.2;
+        stroke-dasharray: 7 9;
+    }
+
+    .wheel-arch-v2 {
+        fill: none;
+        stroke: rgba(219, 234, 254, 0.20);
+        stroke-width: 4;
+        stroke-linecap: round;
+    }
+
+    /* SVG clickable zones */
+
+    .svg-zone-v2 {
+        cursor: pointer;
+        transition: 0.18s ease;
+        stroke-width: 1.25;
+        opacity: 0.66;
+        filter: saturate(1.05);
+    }
+
+        .svg-zone-v2:hover {
+            opacity: 0.93;
+            filter: brightness(1.24) saturate(1.25);
+            transform-box: fill-box;
+            transform-origin: center;
+            transform: scale(1.02);
+        }
+
+        .svg-zone-v2.active {
+            opacity: 1;
+            stroke: #32d583 !important;
+            stroke-width: 2.4;
+            filter: drop-shadow(0 0 12px rgba(50, 213, 131, 0.42));
+        }
+
+    .zone-front-v2 {
+        fill: rgba(239, 68, 68, 0.22);
+        stroke: rgba(239, 68, 68, 0.58);
+    }
+
+    .zone-light-front-v2 {
+        fill: rgba(250, 204, 21, 0.26);
+        stroke: rgba(250, 204, 21, 0.62);
+    }
+
+    .zone-light-rear-v2 {
+        fill: rgba(251, 113, 133, 0.24);
+        stroke: rgba(251, 113, 133, 0.62);
+    }
+
+    .zone-hood-v2 {
+        fill: rgba(139, 92, 246, 0.18);
+        stroke: rgba(139, 92, 246, 0.55);
+    }
+
+    .zone-fender-v2 {
+        fill: rgba(30, 139, 255, 0.16);
+        stroke: rgba(30, 139, 255, 0.55);
+    }
+
+    .zone-rear-fender-v2 {
+        fill: rgba(56, 189, 248, 0.18);
+        stroke: rgba(56, 189, 248, 0.58);
+    }
+
+    .zone-door-v2 {
+        fill: rgba(34, 197, 94, 0.16);
+        stroke: rgba(34, 197, 94, 0.52);
+    }
+
+    .zone-sill-v2 {
+        fill: rgba(20, 184, 166, 0.18);
+        stroke: rgba(20, 184, 166, 0.54);
+    }
+
+    .zone-trunk-v2 {
+        fill: rgba(249, 115, 22, 0.18);
+        stroke: rgba(249, 115, 22, 0.56);
+    }
+
+    .zone-rear-v2 {
+        fill: rgba(251, 113, 133, 0.18);
+        stroke: rgba(251, 113, 133, 0.56);
+    }
+
+    .svg-label-v2 {
+        fill: #f8fbff;
+        font-size: 13px;
+        font-weight: 850;
+        text-anchor: middle;
+        pointer-events: none;
+        paint-order: stroke;
+        stroke: rgba(3, 12, 27, 0.95);
+        stroke-width: 4px;
+        stroke-linejoin: round;
+    }
+
+        .svg-label-v2.small {
+            font-size: 12px;
+        }
+
+    @@media (max-width: 1100px) {
+        .real-blueprint-v2 {
+            min-height: 580px;
+        }
+
+        .vehicle-svg-v2.svg-sedan,
+        .vehicle-svg-v2.svg-hatchback,
+        .vehicle-svg-v2.svg-suv,
+        .vehicle-svg-v2.svg-wagon,
+        .vehicle-svg-v2.svg-coupe {
+            max-width: 410px;
+            transform: translateY(0px) scale(0.95);
+        }
+
+        .blueprint-body-underlay.underlay-sedan,
+        .blueprint-body-underlay.underlay-hatchback,
+        .blueprint-body-underlay.underlay-suv,
+        .blueprint-body-underlay.underlay-wagon,
+        .blueprint-body-underlay.underlay-coupe {
+            background-size: auto 92%;
+            background-position: center 50%;
+        }
+    }
+
+    .damage-chip.disabled,
+    .damage-chip:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        filter: grayscale(1);
+        pointer-events: none;
+    }
+
+    .damage-cart-actions {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .damage-cart-panel {
+        margin-top: 18px;
+        padding: 18px;
+        border-radius: 18px;
+        background: rgba(7, 19, 38, 0.48);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+    }
+
+    .damage-cart-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+    }
+
+        .damage-cart-header h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 19px;
+            font-weight: 850;
+        }
+
+        .damage-cart-header p {
+            margin: 5px 0 0;
+            color: #9fb3d9;
+            font-size: 13px;
+        }
+
+        .damage-cart-header strong {
+            min-width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: rgba(13, 110, 253, 0.22);
+            color: #ffffff;
+        }
+
+    .damage-cart-empty {
+        padding: 14px;
+        border-radius: 14px;
+        color: #9fb3d9;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px dashed rgba(120, 160, 255, 0.18);
+    }
+
+    .damage-cart-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .damage-cart-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto 42px;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(24, 40, 68, 0.72);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+    }
+
+        .damage-cart-item strong {
+            display: block;
+            color: #ffffff;
+        }
+
+        .damage-cart-item span {
+            display: block;
+            margin-top: 3px;
+            color: #9fb3d9;
+            font-size: 13px;
+        }
+
+    .damage-cart-price {
+        color: #32d583;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .damage-cart-remove {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 77, 109, 0.35);
+        background: rgba(255, 77, 109, 0.12);
+        color: #ffb8c5;
+    }
+    /* ===== REQUEST DETAILS MODAL: COMPACT FIX ===== */
+
+    .request-details-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 2500;
+        background: rgba(3, 12, 27, 0.78);
+        backdrop-filter: blur(8px);
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        overflow: hidden;
+    }
+
+    .request-details-modal {
+        width: min(1080px, calc(100vw - 36px));
+        max-height: calc(100vh - 36px);
+        overflow: hidden;
+        border-radius: 24px;
+        background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.20), transparent 38%), rgba(7, 19, 38, 0.98);
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .request-details-header {
+        flex: 0 0 auto;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+        .request-details-header h3 {
+            margin: 4px 0 0;
+            color: #ffffff;
+            font-size: 28px;
+            line-height: 1.1;
+            font-weight: 900;
+        }
+
+    .request-details-kicker {
+        color: #9fb3d9;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .request-details-close {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        border-radius: 13px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+        color: #ffffff;
+        font-size: 26px;
+        line-height: 1;
+    }
+
+    .request-details-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 20px 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 18px;
+    }
+
+    .request-details-main,
+    .request-details-side {
+        min-width: 0;
+        display: grid;
+        gap: 14px;
+        align-content: start;
+    }
+
+    .request-details-card {
+        min-width: 0;
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(24, 40, 68, 0.72);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+    }
+
+        .request-details-card h4 {
+            margin: 0 0 12px;
+            color: #ffffff;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: 850;
+        }
+
+    .request-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .request-info-item {
+        min-width: 0;
+        padding: 12px 13px;
+        border-radius: 14px;
+        background: rgba(7, 19, 38, 0.48);
+        border: 1px solid rgba(120, 160, 255, 0.10);
+    }
+
+        .request-info-item span {
+            display: block;
+            color: #9fb3d9;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .request-info-item strong {
+            display: block;
+            color: #ffffff;
+            font-weight: 850;
+            overflow-wrap: anywhere;
+        }
+
+    .request-damage-text {
+        color: #d8e8ff;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .request-photo-box {
+        height: 230px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(7, 19, 38, 0.62);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        display: grid;
+        place-items: center;
+        position: relative;
+    }
+
+        .request-photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: rgba(3, 12, 27, 0.88);
+        }
+
+    .request-photo-actions {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .photo-preview-button {
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.24);
+        background: rgba(13, 110, 253, 0.14);
+        color: #dbeafe;
+        font-weight: 800;
+    }
+
+        .photo-preview-button:hover {
+            background: rgba(13, 110, 253, 0.24);
+            border-color: rgba(80, 160, 255, 0.72);
+        }
+
+    .request-photo-empty {
+        color: #9fb3d9;
+        padding: 24px;
+        text-align: center;
+    }
+
+    .request-price-large {
+        color: #32d583;
+        font-size: 36px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+        white-space: nowrap;
+    }
+
+    .request-status-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+        .request-status-actions button {
+            min-height: 40px;
+            border-radius: 12px;
+            font-weight: 850;
+            font-size: 13px;
+        }
+
+    .request-details-footer {
+        flex: 0 0 auto;
+        padding: 14px 22px;
+        border-top: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* ===== REQUEST STATUS TIMELINE: VERTICAL FIX ===== */
+
+    .request-status-timeline {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 9px;
+        margin-top: 12px;
+        overflow: visible;
+        padding-bottom: 0;
+    }
+
+    .status-step {
+        position: relative;
+        min-height: 68px;
+        padding: 11px 12px 11px 52px;
+        border-radius: 15px;
+        background: rgba(7, 19, 38, 0.48);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+        display: block;
+    }
+
+        .status-step::before {
+            content: "";
+            position: absolute;
+            left: 14px;
+            top: 15px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: block;
+            background: rgba(143, 166, 200, 0.22);
+            border: 1px solid rgba(143, 166, 200, 0.34);
+        }
+
+        .status-step::after {
+            content: "";
+            position: absolute;
+            left: 26px;
+            top: 44px;
+            width: 2px;
+            height: calc(100% - 24px);
+            background: rgba(120, 160, 255, 0.16);
+        }
+
+        .status-step:last-child::after {
+            display: none;
+        }
+
+        .status-step.done {
+            border-color: rgba(50, 213, 131, 0.35);
+            background: rgba(50, 213, 131, 0.08);
+        }
+
+            .status-step.done::before {
+                background: #32d583;
+                border-color: #32d583;
+                box-shadow: 0 0 16px rgba(50, 213, 131, 0.45);
+            }
+
+            .status-step.done::after {
+                background: rgba(50, 213, 131, 0.35);
+            }
+
+        .status-step.current {
+            border-color: rgba(80, 160, 255, 0.75);
+            background: rgba(13, 110, 253, 0.16);
+            box-shadow: 0 0 22px rgba(13, 110, 253, 0.18);
+        }
+
+            .status-step.current::before {
+                background: #1e8bff;
+                border-color: #6fb4ff;
+                box-shadow: 0 0 18px rgba(30, 139, 255, 0.55);
+            }
+
+    .status-step-title {
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 850;
+        line-height: 1.25;
+    }
+
+    .status-step-caption {
+        margin-top: 4px;
+        color: #9fb3d9;
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .client-status-message {
+        margin-top: 12px;
+        padding: 13px;
+        border-radius: 15px;
+        background: rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(120, 160, 255, 0.16);
+        color: #d8e8ff;
+        line-height: 1.42;
+    }
+
+        .client-status-message strong {
+            color: #ffffff;
+        }
+
+    /* адаптив карточки */
+    @@media (max-width: 1050px) {
+        .request-details-modal {
+            width: calc(100vw - 24px);
+            max-height: calc(100vh - 24px);
+        }
+
+        .request-details-body {
+            grid-template-columns: 1fr;
+        }
+
+        .request-details-side {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .request-details-backdrop {
+            padding: 8px;
+        }
+
+        .request-details-modal {
+            width: calc(100vw - 16px);
+            max-height: calc(100vh - 16px);
+            border-radius: 18px;
+        }
+
+        .request-details-header,
+        .request-details-body,
+        .request-details-footer {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .request-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .request-status-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .request-price-large {
+            font-size: 30px;
+        }
+    }
+
+    .summary-success {
+        margin-top: 14px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        color: #d8ffe9;
+        background: rgba(50, 213, 131, 0.12);
+        border: 1px solid rgba(50, 213, 131, 0.28);
+    }
+    /* ===== PHOTO VIEWER MODAL ===== */
+
+    .photo-viewer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        background: rgba(3, 12, 27, 0.88);
+        backdrop-filter: blur(8px);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+    }
+
+    .photo-viewer-modal {
+        width: min(1100px, calc(100vw - 48px));
+        max-height: calc(100vh - 48px);
+        border-radius: 24px;
+        background: rgba(7, 19, 38, 0.98);
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        box-shadow: 0 32px 90px rgba(0, 0, 0, 0.65);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .photo-viewer-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(120, 160, 255, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+        .photo-viewer-header strong {
+            color: #ffffff;
+            font-size: 18px;
+        }
+
+    .photo-viewer-close {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+        color: #ffffff;
+        font-size: 26px;
+        line-height: 1;
+    }
+
+    .photo-viewer-body {
+        padding: 18px;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+        overflow: auto;
+    }
+
+        .photo-viewer-body img {
+            max-width: 100%;
+            max-height: calc(100vh - 170px);
+            object-fit: contain;
+            border-radius: 16px;
+            background: rgba(3, 12, 27, 0.9);
+        }
+
+    @@media (max-width: 650px) {
+        .photo-viewer-backdrop {
+            padding: 10px;
+        }
+
+        .photo-viewer-modal {
+            width: calc(100vw - 20px);
+            max-height: calc(100vh - 20px);
+            border-radius: 18px;
+        }
+    }
+
+    .section-svg-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 13px;
+        color: #bfdbfe;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.24), rgba(124, 58, 237, 0.16)), rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(147, 197, 253, 0.22);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+        .section-svg-icon svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .summary-svg-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 13px;
+        color: #bfdbfe;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.24), rgba(124, 58, 237, 0.16)), rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(147, 197, 253, 0.22);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+        .summary-svg-icon svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.1;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    /* ===== REQUEST TABLE ACTIONS ===== */
+
+    .request-table-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        width: 92px;
+        align-items: stretch;
+    }
+
+    .request-table-action {
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.22);
+        background: rgba(24, 40, 68, 0.72);
+        color: #dbeafe;
+        font-size: 13px;
+        font-weight: 850;
+        line-height: 1;
+        transition: 0.16s ease;
+    }
+
+        .request-table-action:hover {
+            transform: translateY(-1px);
+            color: #ffffff;
+            border-color: rgba(80, 160, 255, 0.72);
+            background: rgba(31, 54, 91, 0.96);
+        }
+
+    .request-table-action-primary {
+        border-color: rgba(96, 165, 250, 0.34);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(124, 58, 237, 0.10)), rgba(24, 40, 68, 0.76);
+    }
+
+    .request-table-action-secondary {
+        border-color: rgba(147, 197, 253, 0.22);
+    }
+
+    .request-table-action-danger {
+        color: #ffd1da;
+        border-color: rgba(255, 77, 109, 0.32);
+        background: rgba(255, 77, 109, 0.10);
+    }
+
+        .request-table-action-danger:hover {
+            color: #ffffff;
+            border-color: rgba(255, 77, 109, 0.58);
+            background: rgba(255, 77, 109, 0.18);
+        }
+
+    .table td:last-child,
+    .table th:last-child {
+        width: 110px;
+        min-width: 110px;
+    }
+
+</style>
+
+<div class="repair-page">
+
+    <section class="repair-workspace">
+        <div class="repair-section-header">
+            <div>
+                <span class="section-kicker">Новая оценка ремонта</span>
+                <h2>Параметры автомобиля и повреждения</h2>
+                <p>Заполните данные клиента, выберите автомобиль и одну или несколько повреждённых деталей.</p>
+            </div>
+
+            <div class="repair-step-pill">
+                <span>1</span>
+                Автомобиль и повреждения
+            </div>
         </div>
 
-        <div class="card-body">
-            <h5>Новая заявка</h5>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <label class="form-label">Имя клиента</label>
-                    <input class="form-control" @bind="newRequest.ClientName" />
+        <div class="repair-grid">
+            <div class="repair-main-card">
+                <div class="repair-card-title">
+                    <span class="section-svg-icon">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M5 21a7 7 0 0 1 14 0" />
+                        </svg>
+                    </span>
+                    <h3>Данные клиента</h3>
                 </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Телефон</label>
-                    <input class="form-control" @bind="newRequest.Phone" />
-                </div>
+                <div class="repair-form-grid three">
+                    <div>
+                        <label class="form-label">Имя клиента</label>
+                        <input class="form-control" @bind="newRequest.ClientName" placeholder="Например: Иван Петров" />
+                    </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Статус</label>
-                    <select class="form-select" @bind="newRequest.Status">
-                        <option>Новая</option>
-                        <option>В обработке</option>
-                        <option>Оценена</option>
-                        <option>Завершена</option>
-                    </select>
-                </div>
+                    <div>
+                        <label class="form-label">Телефон</label>
+                        <input class="form-control" @bind="newRequest.Phone" placeholder="+7 900 000 00 00" />
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label">Марка авто</label>
-                    <select class="form-select" value="@selectedBrand" @onchange="OnBrandChanged">
-                        <option value="">Выберите марку</option>
-                        @foreach (var brand in brands)
-                        {
-                            <option value="@brand">@brand</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Модель</label>
-                    <select class="form-select"
-                            value="@selectedModel"
-                            @onchange="OnModelChanged"
-                            disabled="@string.IsNullOrEmpty(selectedBrand)">
-                        <option value="">Выберите модель</option>
-                        @foreach (var model in models)
-                        {
-                            <option value="@model">@model</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Поколение</label>
-                    <select class="form-select"
-                            value="@selectedGeneration"
-                            @onchange="OnGenerationChanged"
-                            disabled="@string.IsNullOrEmpty(selectedModel)">
-                        <option value="">Выберите поколение</option>
-                        @foreach (var generation in generations)
-                        {
-                            <option value="@generation.Generation">
-                                @generation.Generation (@generation.StartYear–@generation.EndYear)
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Год выпуска</label>
-                    <select class="form-select"
-                            value="@selectedYear"
-                            @onchange="OnYearChanged"
-                            disabled="@string.IsNullOrEmpty(selectedGeneration)">
-                        <option value="0">Выберите год</option>
-                        @foreach (var year in years)
-                        {
-                            <option value="@year">@year</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Повреждённая деталь</label>
-                    <select class="form-select" @bind="newRequest.DamagedPart">
-                        <option value="">Выберите деталь</option>
-                        <option>Передний бампер</option>
-                        <option>Задний бампер</option>
-                        <option>Капот</option>
-                        <option>Дверь</option>
-                        <option>Крыло</option>
-                        <option>Фара</option>
-                        <option>Крышка багажника</option>
-                        <option>Порог</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Тип ремонта</label>
-                    <select class="form-select" @bind="newRequest.RepairType">
-                        <option value="">Выберите тип</option>
-                        <option>Ремонт</option>
-                        <option>Покраска</option>
-                        <option>Замена</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Степень повреждения</label>
-                    <select class="form-select" @bind="newRequest.DamageLevel">
-                        <option value="">Выберите степень</option>
-                        <option>Лёгкое</option>
-                        <option>Среднее</option>
-                        <option>Сильное</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Фото повреждения</label>
-
-                    <input id="repairPhotoInput"
-                           class="form-control"
-                           type="file"
-                           accept=".jpg,.jpeg,.png,.webp"
-                           onchange="uploadRepairPhoto(this)" />
-
-                    <input id="repairPhotoPath" type="hidden" />
-
-                    <small id="repairPhotoMessage" class="text-muted"></small>
-
-                    @* <div class="mt-2">
-                        <img id="repairPhotoPreview"
-                             src=""
-                             alt="Фото повреждения"
-                             style="display:none; width:120px; height:90px; object-fit:cover; border-radius:8px;" />
-                    </div> *@
-                </div>
-
-                <div class="col-12">
-                    <div class="alert alert-secondary">
+                    @if (UserState.CanChangeRequestStatus)
+                    {
                         <div>
-                            Предварительная стоимость:
-                            <strong>@previewCost ₽</strong>
+                            <label class="form-label">Статус</label>
+                            <select class="form-select" @bind="newRequest.Status">
+                                <option>Новая</option>
+                                <option>В обработке</option>
+                                <option>Оценена</option>
+                                <option>Завершена</option>
+                            </select>
                         </div>
+                    }
+                    else
+                    {
+                        <div>
+                            <label class="form-label">Статус</label>
+                            <input class="form-control" value="Новая" readonly />
+                        </div>
+                    }
+                </div>
 
-                        @if (previewCost > 0)
-                        {
-                            <div class="small text-muted mt-2">
-                                Базовая цена работы: <strong>@previewBasePrice ₽</strong>
-                                <br />
-                                Коэффициент повреждения "@newRequest.DamageLevel":
-                                x@(previewDamageMultiplier.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))
-                                <br />
-                                Коэффициент марки @newRequest.CarBrand:
-                                x@(previewBrandMultiplier.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))
-                                <br />
-                                Формула:
-                                @previewBasePrice × @previewDamageMultiplier × @previewBrandMultiplier = <strong>@previewCost ₽</strong>
-                            </div>
-                        }
+                <div class="repair-divider"></div>
 
-                        @if (!string.IsNullOrWhiteSpace(errorMessage))
-                        {
-                            <div class="alert alert-danger mt-2 mb-0">
-                                @errorMessage
-                            </div>
-                        }
+                <div class="repair-card-title">
+                    <span class="section-svg-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 13l2-5h12l2 5" />
+                            <path d="M5 13h14v5H5z" />
+                            <circle cx="8" cy="18" r="2" />
+                            <circle cx="16" cy="18" r="2" />
+                        </svg>
+                    </span>
+                    <h3>Автомобиль</h3>
+                </div>
+
+                <div class="repair-form-grid four">
+                    <div>
+                        <label class="form-label">Марка авто</label>
+                        <select class="form-select" value="@selectedBrand" @onchange="OnBrandChanged">
+                            <option value="">Выберите марку</option>
+                            @foreach (var brand in brands)
+                            {
+                                <option value="@brand">@brand</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Модель</label>
+                        <select class="form-select"
+                                value="@selectedModel"
+                                @onchange="OnModelChanged"
+                                disabled="@string.IsNullOrEmpty(selectedBrand)">
+                            <option value="">Выберите модель</option>
+                            @foreach (var model in models)
+                            {
+                                <option value="@model">@model</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Поколение</label>
+                        <select class="form-select"
+                                value="@selectedGeneration"
+                                @onchange="OnGenerationChanged"
+                                disabled="@string.IsNullOrEmpty(selectedModel)">
+                            <option value="">Выберите поколение</option>
+                            @foreach (var generation in generations)
+                            {
+                                <option value="@generation.Generation">
+                                    @generation.Generation (@generation.StartYear–@generation.EndYear)
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Год выпуска</label>
+                        <select class="form-select"
+                                value="@selectedYear"
+                                @onchange="OnYearChanged"
+                                disabled="@string.IsNullOrEmpty(selectedGeneration)">
+                            <option value="0">Выберите год</option>
+                            @foreach (var year in years)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
                     </div>
                 </div>
 
-                <div class="col-12">
-                    <button class="btn btn-outline-secondary me-2" @onclick="UpdatePreviewCost">
-                        Рассчитать стоимость
+                <div class="repair-divider"></div>
+
+                <div class="repair-card-title">
+                    <span class="section-svg-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4" />
+                            <path d="M15 5l4 4" />
+                        </svg>
+                    </span>
+                    <h3>Повреждение</h3>
+                </div>
+
+                <div class="repair-form-grid three">
+                    <div>
+                        <label class="form-label">Повреждённая деталь</label>
+                        <input class="form-control"
+                               value="@GetSelectedPartsText()"
+                               readonly />
+                    </div>
+
+                    <div>
+                        <label class="form-label">Тип ремонта</label>
+                        <select class="form-select" @bind="newRequest.RepairType">
+                            <option value="">Выберите тип</option>
+                            <option>Ремонт</option>
+                            <option>Покраска</option>
+                            <option>Замена</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Степень повреждения</label>
+                        <select class="form-select" @bind="newRequest.DamageLevel">
+                            <option value="">Выберите степень</option>
+                            <option>Лёгкое</option>
+                            <option>Среднее</option>
+                            <option>Сильное</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="damage-type-row">
+                    <button type="button"
+                            class="@GetDamagePresetClass("Царапина")"
+                            disabled="@IsDamagePresetDisabled("Царапина")"
+                            @onclick='() => SelectDamagePreset("Царапина", "Замена", "Лёгкое")'>
+                        🟣 Царапина
                     </button>
 
-                    <button class="btn btn-primary" @onclick="AddRequest">
-                        Рассчитать и сохранить заявку
+                    <button type="button"
+                            class="@GetDamagePresetClass("Вмятина")"
+                            disabled="@IsDamagePresetDisabled("Вмятина")"
+                            @onclick='() => SelectDamagePreset("Вмятина", "Ремонт", "Среднее")'>
+                        🔵 Вмятина
                     </button>
+
+                    <button type="button"
+                            class="@GetDamagePresetClass("Скол")"
+                            disabled="@IsDamagePresetDisabled("Скол")"
+                            @onclick='() => SelectDamagePreset("Скол", "Замена", "Лёгкое")'>
+                        🟢 Скол
+                    </button>
+
+                    <button type="button"
+                            class="@GetDamagePresetClass("Трещина")"
+                            disabled="@IsDamagePresetDisabled("Трещина")"
+                            @onclick='() => SelectDamagePreset("Трещина", "Ремонт", "Среднее")'>
+                        🟡 Трещина
+                    </button>
+
+                    <button type="button"
+                            class="@GetDamagePresetClass("Коррозия")"
+                            disabled="@IsDamagePresetDisabled("Коррозия")"
+                            @onclick='() => SelectDamagePreset("Коррозия", "Покраска", "Среднее")'>
+                        🟠 Коррозия
+                    </button>
+
+                    <button type="button"
+                            class="@GetDamagePresetClass("Замена детали")"
+                            disabled="@IsDamagePresetDisabled("Замена детали")"
+                            @onclick='() => SelectDamagePreset("Замена детали", "Замена", "Сильное")'>
+                        🔴 Замена детали
+                    </button>
+                </div>
+                <div class="damage-cart-actions">
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="AddDamageToCart">
+                        ➕ Добавить повреждение
+                    </button>
+
+
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            @onclick="ClearDamageSelection">
+                        Очистить выбор
+                    </button>
+                </div>
+                <div class="damage-cart-panel">
+                    <div class="damage-cart-header">
+                        <div>
+                            <h3>Корзина повреждений</h3>
+                            <p>Каждая деталь может иметь свой тип повреждения и отдельный расчёт.</p>
+                        </div>
+
+                        <strong>@damageCart.Count</strong>
+                    </div>
+
+                    @if (damageCart.Count == 0)
+                    {
+                        <div class="damage-cart-empty">
+                            Повреждения пока не добавлены. Выберите деталь, тип повреждения и нажмите “Добавить повреждение”.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="damage-cart-list">
+                            @foreach (var item in damageCart)
+                            {
+                                <div class="damage-cart-item">
+                                    <div>
+                                        <strong>@item.PartName</strong>
+                                        <span>@item.DamagePreset · @item.RepairType · @item.DamageLevel</span>
+                                    </div>
+
+                                    <div class="damage-cart-price">
+                                        @item.Cost.ToString("N0") ₽
+                                    </div>
+
+                                    <button type="button"
+                                            class="damage-cart-remove"
+                                            @onclick="() => RemoveDamageFromCart(item)">
+                                        🗑
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="damage-map-panel">
+                    <div class="damage-map-header">
+                        <div>
+                            <h3>Карта повреждений кузова</h3>
+                            <p>Выберите один или несколько повреждённых элементов на схеме автомобиля.</p>
+                        </div>
+
+                        <div class="selected-damage-info selected-damage-info-list">
+                            <span>Выбрано:</span>
+
+                            @if (selectedDamageParts.Count == 0)
+                            {
+                                <strong>не выбрано</strong>
+                            }
+                            else
+                            {
+                                <div class="selected-parts-list">
+                                    @foreach (var part in selectedDamageParts)
+                                    {
+                                        <button type="button"
+                                                class="selected-part-pill"
+                                                @onclick="() => SelectDamagePart(part)">
+                                            @part
+                                            <span>×</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="body-type-tabs">
+                        <button type="button"
+                                class="@GetBodyTypeClass("Седан")"
+                                @onclick='() => SelectBodyType("Седан")'>
+                            🚘 Седан
+                        </button>
+
+                        <button type="button"
+                                class="@GetBodyTypeClass("Хэтчбек")"
+                                @onclick='() => SelectBodyType("Хэтчбек")'>
+                            🚗 Хэтчбек
+                        </button>
+
+                        <button type="button"
+                                class="@GetBodyTypeClass("SUV")"
+                                @onclick='() => SelectBodyType("SUV")'>
+                            🚙 SUV
+                        </button>
+
+                        <button type="button"
+                                class="@GetBodyTypeClass("Универсал")"
+                                @onclick='() => SelectBodyType("Универсал")'>
+                            🚐 Универсал
+                        </button>
+
+                        <button type="button"
+                                class="@GetBodyTypeClass("Купе")"
+                                @onclick='() => SelectBodyType("Купе")'>
+                            🏎️ Купе
+                        </button>
+                    </div>
+
+                    <div class="damage-map-layout">
+                        <div class="damage-parts-list">
+                            @foreach (var part in GetDamagePartOptions())
+                            {
+                                <button type="button"
+                                        class="@GetPartListClass(part)"
+                                        @onclick="() => SelectDamagePart(part)">
+                                    <span class="@GetPartDotClass(part)"></span>
+                                    <span>@part</span>
+
+                                    @if (selectedDamageParts.Contains(part))
+                                    {
+                                        <span class="part-check">✓</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+
+                        <div class="vehicle-map-card vehicle-map-card-v2">
+                            <div class="vehicle-map-toolbar">
+                                <span>Тип кузова: <strong>@selectedBodyType</strong></span>
+                                <span>Профессиональная схема кузовных зон</span>
+                            </div>
+
+                            <div class="vehicle-blueprint real-blueprint-v2">
+                                <div class="blueprint-body-underlay @GetBodyUnderlayClass()"></div>
+
+                                <svg class="vehicle-svg-v2 @GetBodySvgClass()"
+                                     viewBox="0 0 520 760"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="bodyGradientV2" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.22" />
+                                            <stop offset="52%" stop-color="#1d4ed8" stop-opacity="0.12" />
+                                            <stop offset="100%" stop-color="#0f172a" stop-opacity="0.2" />
+                                        </linearGradient>
+
+                                        <linearGradient id="glassGradientV2" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#dbeafe" stop-opacity="0.16" />
+                                            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.05" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    <ellipse cx="260" cy="390" rx="188" ry="330" class="vehicle-shadow-v2" />
+
+                                    <path d="@GetVehicleShellPathV2()" class="vehicle-shell-v2" />
+                                    <path d="@GetCabinPathV2()" class="vehicle-cabin-v2" />
+                                    <path d="@GetFrontGlassPathV2()" class="vehicle-glass-v2" />
+                                    <path d="@GetRearGlassPathV2()" class="vehicle-glass-v2" />
+
+                                    <path d="M178 278 Q202 258 236 266 L236 390 Q202 400 178 382 Z" class="vehicle-side-glass-v2" />
+                                    <path d="M342 278 Q318 258 284 266 L284 390 Q318 400 342 382 Z" class="vehicle-side-glass-v2" />
+
+                                    <line x1="260" y1="68" x2="260" y2="690" class="vehicle-axis-v2" />
+
+                                    <path d="M178 64 Q260 28 342 64 Q354 82 342 104 L178 104 Q166 82 178 64 Z"
+                                          class='@GetSvgZoneClass("Передний бампер", "svg-zone-v2 zone-front-v2")'
+                                          @onclick='() => SelectDamagePart("Передний бампер")' />
+                                    <svg:text x="260" y="88" class="svg-label-v2">Передний бампер</svg:text>
+
+                                    <path d="M136 112 Q158 88 182 106 Q178 132 150 144 Q130 134 136 112 Z"
+                                          class='@GetSvgZoneClass("Передняя левая фара", "svg-zone-v2 zone-light-front-v2")'
+                                          @onclick='() => SelectDamagePart("Передняя левая фара")' />
+
+                                    <path d="M384 112 Q362 88 338 106 Q342 132 370 144 Q390 134 384 112 Z"
+                                          class='@GetSvgZoneClass("Передняя правая фара", "svg-zone-v2 zone-light-front-v2")'
+                                          @onclick='() => SelectDamagePart("Передняя правая фара")' />
+
+                                    <path d="M184 116 Q260 86 336 116 L354 210 Q342 238 312 250 L208 250 Q178 238 166 210 Z"
+                                          class='@GetSvgZoneClass("Капот", "svg-zone-v2 zone-hood-v2")'
+                                          @onclick='() => SelectDamagePart("Капот")' />
+                                    <svg:text x="260" y="184" class="svg-label-v2">Капот</svg:text>
+
+                                    <path d="M118 154 Q144 128 168 150 L166 286 Q144 306 116 280 Q98 224 118 154 Z"
+                                          class='@GetSvgZoneClass("Переднее левое крыло", "svg-zone-v2 zone-fender-v2")'
+                                          @onclick='() => SelectDamagePart("Переднее левое крыло")' />
+                                    <svg:text x="140" y="220" class="svg-label-v2 small">Пер. лев. крыло</svg:text>
+
+                                    <path d="M402 154 Q376 128 352 150 L354 286 Q376 306 404 280 Q422 224 402 154 Z"
+                                          class='@GetSvgZoneClass("Переднее правое крыло", "svg-zone-v2 zone-fender-v2")'
+                                          @onclick='() => SelectDamagePart("Переднее правое крыло")' />
+                                    <svg:text x="380" y="220" class="svg-label-v2 small">Пер. прав. крыло</svg:text>
+
+                                    @if (selectedBodyType == "Купе")
+                                    {
+                                        <path d="M128 310 Q154 276 186 292 L184 500 Q154 522 128 490 Z"
+                                              class='@GetSvgZoneClass("Левая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Левая дверь")' />
+                                        <svg:text x="157" y="405" class="svg-label-v2 small">Левая дверь</svg:text>
+
+                                        <path d="M392 310 Q366 276 334 292 L336 500 Q366 522 392 490 Z"
+                                              class='@GetSvgZoneClass("Правая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Правая дверь")' />
+                                        <svg:text x="363" y="405" class="svg-label-v2 small">Правая дверь</svg:text>
+                                    }
+                                    else
+                                    {
+                                        <path d="M128 292 Q154 276 186 292 L184 396 Q154 410 128 390 Z"
+                                              class='@GetSvgZoneClass("Передняя левая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Передняя левая дверь")' />
+                                        <svg:text x="157" y="350" class="svg-label-v2 small">Перед. дверь</svg:text>
+
+                                        <path d="M128 402 Q154 386 184 402 L184 500 Q154 522 128 490 Z"
+                                              class='@GetSvgZoneClass("Задняя левая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Задняя левая дверь")' />
+                                        <svg:text x="157" y="458" class="svg-label-v2 small">Зад. дверь</svg:text>
+
+                                        <path d="M392 292 Q366 276 334 292 L336 396 Q366 410 392 390 Z"
+                                              class='@GetSvgZoneClass("Передняя правая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Передняя правая дверь")' />
+                                        <svg:text x="363" y="350" class="svg-label-v2 small">Перед. дверь</svg:text>
+
+                                        <path d="M392 402 Q366 386 336 402 L336 500 Q366 522 392 490 Z"
+                                              class='@GetSvgZoneClass("Задняя правая дверь", "svg-zone-v2 zone-door-v2")'
+                                              @onclick='() => SelectDamagePart("Задняя правая дверь")' />
+                                        <svg:text x="363" y="458" class="svg-label-v2 small">Зад. дверь</svg:text>
+                                    }
+
+                                    <path d="M132 506 Q158 486 190 504 L184 610 Q154 636 128 600 Z"
+                                          class='@GetSvgZoneClass("Заднее левое крыло", "svg-zone-v2 zone-rear-fender-v2")'
+                                          @onclick='() => SelectDamagePart("Заднее левое крыло")' />
+                                    <svg:text x="158" y="560" class="svg-label-v2 small">Зад. лев. крыло</svg:text>
+
+                                    <path d="M388 506 Q362 486 330 504 L336 610 Q366 636 392 600 Z"
+                                          class='@GetSvgZoneClass("Заднее правое крыло", "svg-zone-v2 zone-rear-fender-v2")'
+                                          @onclick='() => SelectDamagePart("Заднее правое крыло")' />
+                                    <svg:text x="362" y="560" class="svg-label-v2 small">Зад. прав. крыло</svg:text>
+
+                                    <path d="M96 304 Q112 304 118 326 L118 542 Q112 566 96 566 Q82 548 82 436 Q82 326 96 304 Z"
+                                          class='@GetSvgZoneClass("Порог", "svg-zone-v2 zone-sill-v2")'
+                                          @onclick='() => SelectDamagePart("Порог")' />
+
+                                    <path d="M424 304 Q408 304 402 326 L402 542 Q408 566 424 566 Q438 548 438 436 Q438 326 424 304 Z"
+                                          class='@GetSvgZoneClass("Порог", "svg-zone-v2 zone-sill-v2")'
+                                          @onclick='() => SelectDamagePart("Порог")' />
+
+                                    <path d="@GetRearDeckPathV2()"
+                                          class='@GetSvgZoneClass("Крышка багажника", "svg-zone-v2 zone-trunk-v2")'
+                                          @onclick='() => SelectDamagePart("Крышка багажника")' />
+                                    <svg:text x="260" y="592" class="svg-label-v2">@GetRearDeckLabel()</svg:text>
+
+                                    <path d="M156 622 Q176 610 196 622 Q190 642 164 646 Q150 638 156 622 Z"
+                                          class='@GetSvgZoneClass("Задняя левая фара", "svg-zone-v2 zone-light-rear-v2")'
+                                          @onclick='() => SelectDamagePart("Задняя левая фара")' />
+
+                                    <path d="M364 622 Q344 610 324 622 Q330 642 356 646 Q370 638 364 622 Z"
+                                          class='@GetSvgZoneClass("Задняя правая фара", "svg-zone-v2 zone-light-rear-v2")'
+                                          @onclick='() => SelectDamagePart("Задняя правая фара")' />
+
+                                    <path d="M174 650 Q260 680 346 650 Q356 668 342 690 L178 690 Q164 668 174 650 Z"
+                                          class='@GetSvgZoneClass("Задний бампер", "svg-zone-v2 zone-rear-v2")'
+                                          @onclick='() => SelectDamagePart("Задний бампер")' />
+                                    <svg:text x="260" y="674" class="svg-label-v2">Задний бампер</svg:text>
+
+                                    <path d="M90 186 Q52 230 74 284" class="wheel-arch-v2" />
+                                    <path d="M430 186 Q468 230 446 284" class="wheel-arch-v2" />
+                                    <path d="M94 490 Q56 536 82 592" class="wheel-arch-v2" />
+                                    <path d="M426 490 Q464 536 438 592" class="wheel-arch-v2" />
+                                </svg>
+                            </div>
+
+                            <div class="damage-map-legend">
+                                <span><i class="legend-dot selected"></i> выбранная зона</span>
+                                <span><i class="legend-dot available"></i> доступная зона</span>
+                                <span><i class="legend-dot hover"></i> наведение</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="repair-divider"></div>
+
+                <div class="repair-card-title">
+                    <span class="section-svg-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 8h4l2-3h4l2 3h4v12H4z" />
+                            <circle cx="12" cy="14" r="3" />
+                        </svg>
+                    </span>
+                    <h3>Фото повреждения</h3>
+                </div>
+
+                <div class="upload-panel">
+                    <div class="upload-icon">☁️</div>
+
+                    <div class="upload-content">
+                        <strong>Загрузите фото автомобиля или повреждения</strong>
+                        <span>JPG, PNG, WEBP. Файл будет сохранён в заявку.</span>
+
+                        <input id="repairPhotoInput"
+                               class="form-control"
+                               type="file"
+                               accept=".jpg,.jpeg,.png,.webp"
+                               onchange="uploadRepairPhoto(this)" />
+
+                        <input id="repairPhotoPath" type="hidden" />
+
+                        <small id="repairPhotoMessage" class="text-muted"></small>
+                    </div>
                 </div>
             </div>
 
-            <hr />
+            <aside class="repair-summary-card">
+                <div class="summary-title">
+                    <span class="summary-svg-icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="6" width="18" height="12" rx="2"></rect>
+                            <path d="M3 10h18"></path>
+                            <path d="M7 14h4"></path>
+                        </svg>
+                    </span>
+                    <div>
+                        <h3>Предварительный расчёт</h3>
+                        <p>Стоимость по выбранным параметрам</p>
+                    </div>
+                </div>
 
-            <h5>Список заявок</h5>
+                <div class="summary-price">
+                    @previewCost.ToString("N0") ₽
+                </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-5">
+                @if (previewCost > 0)
+                {
+                    <div class="summary-breakdown">
+                        <div>
+                            <span>Базовая цена</span>
+                            <strong>@previewBasePrice.ToString("N0") ₽</strong>
+                        </div>
+
+                        <div>
+                            <span>Коэффициент повреждения</span>
+                            <strong>x@(previewDamageMultiplier.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))</strong>
+                        </div>
+
+                        <div>
+                            <span>Коэффициент марки @newRequest.CarBrand</span>
+                            <strong>x@(previewBrandMultiplier.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))</strong>
+                        </div>
+
+                        <div class="summary-total-row">
+                            <span>Итого</span>
+                            <strong>@previewCost.ToString("N0") ₽</strong>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="summary-empty">
+                        Выберите деталь, тип ремонта, степень повреждения и автомобиль.
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="summary-error">
+                        @errorMessage
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(successMessage))
+                {
+                    <div class="summary-success">
+                        @successMessage
+                    </div>
+                }
+
+                <div class="summary-actions">
+                    <button class="btn btn-outline-secondary w-100" @onclick="UpdatePreviewCost">
+                        Рассчитать стоимость
+                    </button>
+
+                    <button class="btn btn-primary w-100" @onclick="AddRequest">
+                        Рассчитать и сохранить заявку
+                    </button>
+                </div>
+
+                <div class="summary-hint">
+                    <strong>Формула расчёта</strong>
+                    <span>Сумма базовых цен × повреждение × марка автомобиля</span>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <section id="requests-list" class="requests-section">
+        <div class="requests-header">
+            <div>
+                <span class="section-kicker">Журнал обращений</span>
+                <h2>@(UserState.CanSeeAllRequests ? "Список заявок" : "Мои заявки")</h2>
+            </div>
+
+            @if (UserState.CanSeeAllRequests)
+            {
+                <div class="requests-filters">
                     <input class="form-control"
                            placeholder="Поиск по имени, телефону, марке или модели"
                            @bind="searchText" />
-                </div>
 
-                <div class="col-md-3">
                     <select class="form-select" @bind="statusFilter">
                         <option value="">Все статусы</option>
                         <option>Новая</option>
@@ -216,132 +1645,342 @@
                         <option>Оценена</option>
                         <option>Завершена</option>
                     </select>
-                </div>
 
-                <div class="col-md-2">
-                    <button class="btn btn-outline-primary w-100" @onclick="LoadRequests">
+                    <button class="btn btn-outline-primary" @onclick="LoadRequests">
                         Применить
                     </button>
-                </div>
 
-                <div class="col-md-2">
-                    <button class="btn btn-outline-secondary w-100" @onclick="ResetFilters">
+                    <button class="btn btn-outline-secondary" @onclick="ResetFilters">
                         Сбросить
                     </button>
                 </div>
-            </div>
-
-            @if (requests.Count == 0)
-            {
-                <div class="alert alert-info">Заявок пока нет.</div>
             }
-            else
-            {
-                <div class="table-responsive-mobile">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead>
+
+        </div>
+
+        @if (requests.Count == 0)
+        {
+            <div class="alert alert-info">Заявок пока нет.</div>
+        }
+        else
+        {
+            <div class="table-responsive-mobile">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Клиент</th>
+                            <th>Авто</th>
+                            <th>Повреждение</th>
+                            <th>Фото</th>
+                            <th>Стоимость</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in requests)
+                        {
                             <tr>
-                                <th>ID</th>
-                                <th>Клиент</th>
-                                <th>Авто</th>
-                                <th>Повреждение</th>
-                                <th>Фото</th>
-                                <th>Стоимость</th>
-                                <th>Статус</th>
-                                <th>Дата</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
+                                <td>@item.Id</td>
 
-                        <tbody>
-                            @foreach (var item in requests)
-                            {
-                                <tr>
-                                    <td>@item.Id</td>
+                                <td>
+                                    <strong>@item.ClientName</strong><br />
+                                    <small class="text-muted">@item.Phone</small>
+                                </td>
 
-                                    <td>
-                                        @item.ClientName<br />
-                                        <small class="text-muted">@item.Phone</small>
-                                    </td>
+                                <td>
+                                    <strong>@item.CarBrand @item.CarModel</strong>
+                                    <br />
+                                    <small class="text-muted">
+                                        @item.CarGeneration, @item.CarYear г.
+                                    </small>
+                                </td>
 
-                                    <td>
-                                        @item.CarBrand @item.CarModel
-                                        <br />
-                                        <small class="text-muted">
-                                            @item.CarGeneration, @item.CarYear г.
-                                        </small>
-                                    </td>
+                                <td>
+                                    @item.DamagedPart<br />
+                                    <small class="text-muted">
+                                        @item.RepairType, @item.DamageLevel
+                                    </small>
+                                </td>
 
-                                    <td>
-                                        @item.DamagedPart<br />
-                                        <small class="text-muted">
-                                            @item.RepairType, @item.DamageLevel
-                                        </small>
-                                    </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.PhotoPath))
+                                    {
+                                        <img src="@item.PhotoPath"
+                                             alt="Фото повреждения"
+                                             style="width: 90px; height: 70px; object-fit: cover; border-radius: 10px;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Нет фото</span>
+                                    }
+                                </td>
 
-                                    <td>
-                                        @if (!string.IsNullOrWhiteSpace(item.PhotoPath))
-                                        {
-                                            <img src="@item.PhotoPath"
-                                                 alt="Фото повреждения"
-                                                 style="width: 90px; height: 70px; object-fit: cover; border-radius: 8px;" />
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Нет фото</span>
-                                        }
-                                    </td>
+                                <td>
+                                    <strong>@item.CalculatedCost.ToString("N0") ₽</strong>
+                                </td>
 
-                                    <td>
-                                        <strong>@item.CalculatedCost ₽</strong>
-                                    </td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">
+                                        @item.Status
+                                    </span>
+                                </td>
 
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge @GetStatusBadgeClass(item.Status)">
-                                                @item.Status
-                                            </span>
+                                <td>
+                                    @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                </td>
 
-                                            <select class="form-select form-select-sm"
-                                                    style="max-width: 170px;"
-                                                    value="@item.Status"
-                                                    @onchange='async e => await UpdateStatus(item.Id, e.Value?.ToString() ?? "")'>
-                                                <option>Новая</option>
-                                                <option>В обработке</option>
-                                                <option>Оценена</option>
-                                                <option>Завершена</option>
-                                            </select>
-                                        </div>
-                                    </td>
+                                <td>
+                                    <div class="request-table-actions">
+                                        <button type="button"
+                                                class="request-table-action request-table-action-primary"
+                                                @onclick="() => OpenRequestDetails(item)">
+                                            Открыть
+                                        </button>
 
-                                    <td>
-                                        @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
-                                    </td>
-
-                                    <td>
-                                        <button class="btn btn-outline-dark btn-sm me-2"
+                                        <button type="button"
+                                                class="request-table-action request-table-action-secondary"
                                                 @onclick="() => DownloadPdf(item.Id)">
                                             PDF
                                         </button>
 
-                                        <button class="btn btn-danger btn-sm"
-                                                @onclick="() => DeleteRequest(item.Id)">
-                                            Удалить
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                        @if (UserState.CanSeeAllRequests)
+                                        {
+                                            <button type="button"
+                                                    class="request-table-action request-table-action-danger"
+                                                    @onclick="() => DeleteRequest(item.Id)">
+                                                Удалить
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    @if (selectedRequest is not null)
+    {
+        <div class="request-details-backdrop" @onclick="CloseRequestDetails">
+            <div class="request-details-modal" @onclick:stopPropagation="true">
+                <div class="request-details-header">
+                    <div>
+                        <span class="request-details-kicker">Заявка #@selectedRequest.Id</span>
+                        <h3>@selectedRequest.ClientName</h3>
+                    </div>
+
+                    <button type="button"
+                            class="request-details-close"
+                            @onclick="CloseRequestDetails">
+                        ×
+                    </button>
                 </div>
-            }
+
+                <div class="request-details-body">
+                    <div class="request-details-main">
+                        <div class="request-details-card">
+                            <h4>Клиент и автомобиль</h4>
+
+                            <div class="request-info-grid">
+                                <div class="request-info-item">
+                                    <span>Клиент</span>
+                                    <strong>@selectedRequest.ClientName</strong>
+                                </div>
+
+                                <div class="request-info-item">
+                                    <span>Телефон</span>
+                                    <strong>@selectedRequest.Phone</strong>
+                                </div>
+
+                                <div class="request-info-item">
+                                    <span>Автомобиль</span>
+                                    <strong>@selectedRequest.CarBrand @selectedRequest.CarModel</strong>
+                                </div>
+
+                                <div class="request-info-item">
+                                    <span>Поколение / год</span>
+                                    <strong>@selectedRequest.CarGeneration, @selectedRequest.CarYear г.</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="request-details-card">
+                            <h4>Повреждения</h4>
+
+                            <div class="request-damage-text">
+                                @selectedRequest.DamagedPart
+                            </div>
+
+                            <div class="request-info-grid" style="margin-top: 14px;">
+                                <div class="request-info-item">
+                                    <span>Тип ремонта</span>
+                                    <strong>@selectedRequest.RepairType</strong>
+                                </div>
+
+                                <div class="request-info-item">
+                                    <span>Степень повреждения</span>
+                                    <strong>@selectedRequest.DamageLevel</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="request-details-card">
+                            <h4>Фото повреждения</h4>
+
+                            <div class="request-photo-box">
+                                @if (!string.IsNullOrWhiteSpace(selectedRequest.PhotoPath))
+                                {
+                                    <img src="@selectedRequest.PhotoPath" alt="Фото повреждения" />
+                                }
+                                else
+                                {
+                                    <div class="request-photo-empty">
+                                        Фото к заявке не загружено.
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(selectedRequest.PhotoPath))
+                            {
+                                <div class="request-photo-actions">
+                                    <button type="button"
+                                            class="photo-preview-button"
+                                            @onclick="() => OpenPhotoViewer(selectedRequest.PhotoPath)">
+                                        🔍 Просмотр фото
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <aside class="request-details-side">
+                        <div class="request-details-card">
+                            <h4>Стоимость</h4>
+
+                            <div class="request-price-large">
+                                @selectedRequest.CalculatedCost.ToString("N0") ₽
+                            </div>
+                        </div>
+
+                        <div class="request-details-card">
+                            <h4>Статус заявки</h4>
+
+                            <div style="margin-bottom: 14px;">
+                                <span class="badge @GetStatusBadgeClass(selectedRequest.Status)">
+                                    @selectedRequest.Status
+                                </span>
+                            </div>
+
+                            <div class="request-status-timeline">
+                                @foreach (var step in requestStatusSteps)
+                                {
+                                    <div class="@GetStatusStepClass(selectedRequest.Status, step.Status)">
+                                        <div class="status-step-title">@step.Title</div>
+                                        <div class="status-step-caption">@step.Caption</div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="client-status-message">
+                                <strong>@GetClientStatusTitle(selectedRequest.Status)</strong>
+                                <div>@GetClientStatusDescription(selectedRequest.Status)</div>
+                            </div>
+
+                            @if (UserState.CanChangeRequestStatus)
+                            {
+                                <div class="request-status-actions" style="margin-top: 16px;">
+                                    <button type="button"
+                                            class="btn btn-outline-primary"
+                                            @onclick='async () => await ChangeSelectedRequestStatus("Новая")'>
+                                        Новая
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-outline-warning"
+                                            @onclick='async () => await ChangeSelectedRequestStatus("В обработке")'>
+                                        В обработке
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-outline-success"
+                                            @onclick='async () => await ChangeSelectedRequestStatus("Оценена")'>
+                                        Оценена
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-outline-secondary"
+                                            @onclick='async () => await ChangeSelectedRequestStatus("Завершена")'>
+                                        Завершена
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="request-details-card">
+                            <h4>Служебная информация</h4>
+
+                            <div class="request-info-grid" style="grid-template-columns: 1fr;">
+                                <div class="request-info-item">
+                                    <span>Дата создания</span>
+                                    <strong>@selectedRequest.CreatedAt.ToString("dd.MM.yyyy HH:mm")</strong>
+                                </div>
+
+                                <div class="request-info-item">
+                                    <span>ID заявки</span>
+                                    <strong>#@selectedRequest.Id</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+
+                <div class="request-details-footer">
+                    <button type="button"
+                            class="btn btn-outline-dark"
+                            @onclick="() => DownloadPdf(selectedRequest.Id)">
+                        Скачать PDF
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="CloseRequestDetails">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
+    }
+    
+    @if (!string.IsNullOrWhiteSpace(openedPhotoPath))
+    {
+        <div class="photo-viewer-backdrop" @onclick="ClosePhotoViewer">
+            <div class="photo-viewer-modal" @onclick:stopPropagation="true">
+                <div class="photo-viewer-header">
+                    <strong>Фото повреждения</strong>
+
+                    <button type="button"
+                            class="photo-viewer-close"
+                            @onclick="ClosePhotoViewer">
+                        ×
+                    </button>
+                </div>
+
+                <div class="photo-viewer-body">
+                    <img src="@openedPhotoPath" alt="Фото повреждения" />
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
     private List<CarModelGeneration> carCatalog = new();
-
+    private bool shouldScrollToRequests;
     private List<string> brands = new();
     private List<string> models = new();
     private List<CarModelGeneration> generations = new();
@@ -352,14 +1991,607 @@
     private string selectedGeneration = string.Empty;
     private int selectedYear;
 
+    private string selectedBodyType = "Седан";
+    private string selectedDamagePreset = string.Empty;
+    private List<string> selectedDamageParts = new();
+
+    private readonly List<string> damagePartOptions = new()
+{
+    "Передний бампер",
+    "Капот",
+
+    "Переднее левое крыло",
+    "Переднее правое крыло",
+    "Заднее левое крыло",
+    "Заднее правое крыло",
+
+    "Передняя левая дверь",
+    "Передняя правая дверь",
+    "Задняя левая дверь",
+    "Задняя правая дверь",
+
+    "Передняя левая фара",
+    "Передняя правая фара",
+    "Задняя левая фара",
+    "Задняя правая фара",
+
+    "Порог",
+    "Крышка багажника",
+    "Задний бампер"
+};
+
+    private readonly List<string> fourDoorPartOptions = new()
+{
+    "Передняя левая дверь",
+    "Передняя правая дверь",
+    "Задняя левая дверь",
+    "Задняя правая дверь"
+};
+
+    private readonly List<string> coupeDoorPartOptions = new()
+{
+    "Левая дверь",
+    "Правая дверь"
+};
+
+    private async Task ApplyPendingAiDamagesAsync()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        var aiItems = PendingAiDamageState.TakeItems();
+
+        if (aiItems.Count == 0)
+            return;
+
+        var addedCount = 0;
+        var fallbackCount = 0;
+
+        foreach (var aiItem in aiItems)
+        {
+            var partName = NormalizeAiPartName(aiItem.DetectedPart);
+            var damagePreset = NormalizeAiDamagePreset(aiItem.DamageType);
+            var repairType = NormalizeAiRepairType(aiItem.RepairType);
+            var damageLevel = NormalizeAiDamageLevel(aiItem.DamageLevel);
+
+            if (string.IsNullOrWhiteSpace(partName) ||
+                partName == "Не определено" ||
+                repairType == "Не определено" ||
+                damageLevel == "Не определено")
+            {
+                continue;
+            }
+
+            var basePrice = await GetBasePriceForPartAsync(partName, repairType);
+            var cost = await CalculateSingleDamageCostAsync(partName, repairType, damageLevel);
+
+            if (cost <= 0)
+            {
+                var fallbackRepairType = GetFallbackRepairType(repairType, damagePreset);
+
+                basePrice = await GetBasePriceForPartAsync(partName, fallbackRepairType);
+                cost = await CalculateSingleDamageCostAsync(partName, fallbackRepairType, damageLevel);
+
+                if (cost > 0)
+                {
+                    repairType = fallbackRepairType;
+                    fallbackCount++;
+                }
+            }
+
+            if (cost <= 0 && aiItem.EstimatedCost > 0)
+            {
+                basePrice = aiItem.EstimatedCost;
+                cost = aiItem.EstimatedCost;
+                fallbackCount++;
+            }
+
+            damageCart.Add(new DamageCartItem
+            {
+                PartName = partName,
+                DamagePreset = damagePreset,
+                RepairType = repairType,
+                DamageLevel = damageLevel,
+                BasePrice = basePrice,
+                Cost = cost
+            });
+
+            if (IsDamagePartAvailableForCurrentBody(partName) &&
+                !selectedDamageParts.Contains(partName))
+            {
+                selectedDamageParts.Add(partName);
+            }
+
+            addedCount++;
+        }
+
+        if (addedCount == 0)
+        {
+            errorMessage = "AI нашёл повреждения, но их не удалось сопоставить с формой заявки.";
+            return;
+        }
+
+        SyncCartToRequest();
+        UpdatePreviewFromCart();
+
+        successMessage = fallbackCount > 0
+            ? $"AI-повреждения добавлены в корзину: {addedCount}. Для части позиций использован запасной тип ремонта или AI-стоимость."
+            : $"AI-повреждения добавлены в корзину: {addedCount}. Проверьте данные перед сохранением заявки.";
+    }
+
+    private string NormalizeAiPartName(string partName)
+    {
+        if (string.IsNullOrWhiteSpace(partName))
+            return "Не определено";
+
+        var value = partName.Trim();
+
+        return value switch
+        {
+            "Переднее крыло" => "Переднее левое крыло",
+            "Заднее крыло" => "Заднее левое крыло",
+            "Передняя фара" => "Передняя левая фара",
+            "Задняя фара" => "Задняя левая фара",
+            _ => value
+        };
+    }
+
+    private string NormalizeAiDamagePreset(string damageType)
+    {
+        if (string.IsNullOrWhiteSpace(damageType))
+            return "Не определено";
+
+        return damageType.Trim() switch
+        {
+            "Замена детали" => "Замена детали",
+            "Вмятина" => "Вмятина",
+            "Царапина" => "Царапина",
+            "Скол" => "Скол",
+            "Трещина" => "Трещина",
+            "Коррозия" => "Коррозия",
+            _ => damageType.Trim()
+        };
+    }
+
+    private string NormalizeAiRepairType(string repairType)
+    {
+        if (string.IsNullOrWhiteSpace(repairType))
+            return "Не определено";
+
+        return repairType.Trim() switch
+        {
+            "Ремонт" => "Ремонт",
+            "Покраска" => "Покраска",
+            "Замена" => "Замена",
+            "Смешанный" => "Смешанный",
+            _ => "Не определено"
+        };
+    }
+
+    private string NormalizeAiDamageLevel(string damageLevel)
+    {
+        if (string.IsNullOrWhiteSpace(damageLevel))
+            return "Не определено";
+
+        return damageLevel.Trim() switch
+        {
+            "Лёгкое" => "Лёгкое",
+            "Среднее" => "Среднее",
+            "Сильное" => "Сильное",
+            "Смешанное" => "Смешанное",
+            _ => "Не определено"
+        };
+    }
+
+    private string GetFallbackRepairType(string repairType, string damagePreset)
+    {
+        if (repairType != "Смешанный")
+            return repairType;
+
+        return damagePreset switch
+        {
+            "Замена детали" => "Замена",
+            "Трещина" => "Замена",
+            "Вмятина" => "Ремонт",
+            "Коррозия" => "Ремонт",
+            "Царапина" => "Покраска",
+            "Скол" => "Покраска",
+            _ => "Ремонт"
+        };
+    }
+
+    private List<string> GetDamagePartOptions()
+    {
+        var result = new List<string>
+        {
+            "Передний бампер",
+            "Капот",
+
+            "Переднее левое крыло",
+            "Переднее правое крыло",
+            "Заднее левое крыло",
+            "Заднее правое крыло"
+        };
+
+        result.AddRange(selectedBodyType == "Купе"
+            ? coupeDoorPartOptions
+            : fourDoorPartOptions);
+
+        result.AddRange(new[]
+        {
+            "Передняя левая фара",
+            "Передняя правая фара",
+            "Задняя левая фара",
+            "Задняя правая фара",
+
+            "Порог",
+            "Крышка багажника",
+            "Задний бампер"
+        });
+
+        return result;
+    }
+
+    private bool IsDamagePartAvailableForCurrentBody(string partName)
+    {
+        return GetDamagePartOptions().Contains(partName);
+    }
+
+    private bool IsDoorPart(string partName)
+    {
+        return partName.Contains("двер", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private class RequestStatusStep
+    {
+        public string Status { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Caption { get; set; } = "";
+    }
+
+    private readonly List<RequestStatusStep> requestStatusSteps = new()
+{
+    new RequestStatusStep
+    {
+        Status = "Новая",
+        Title = "Новая",
+        Caption = "Заявка создана и ожидает обработки."
+    },
+    new RequestStatusStep
+    {
+        Status = "В обработке",
+        Title = "В обработке",
+        Caption = "Оценщик проверяет данные и повреждения."
+    },
+    new RequestStatusStep
+    {
+        Status = "Оценена",
+        Title = "Оценена",
+        Caption = "Стоимость рассчитана и готова к согласованию."
+    },
+    new RequestStatusStep
+    {
+        Status = "Завершена",
+        Title = "Завершена",
+        Caption = "Работа по заявке завершена."
+    }
+};
+    private int GetStatusOrder(string status)
+    {
+        return status switch
+        {
+            "Новая" => 1,
+            "В обработке" => 2,
+            "Оценена" => 3,
+            "Завершена" => 4,
+            _ => 0
+        };
+    }
+
+    private string GetStatusStepClass(string currentStatus, string stepStatus)
+    {
+        var currentOrder = GetStatusOrder(currentStatus);
+        var stepOrder = GetStatusOrder(stepStatus);
+
+        if (stepOrder < currentOrder)
+            return "status-step done";
+
+        if (stepOrder == currentOrder)
+            return "status-step current";
+
+        return "status-step";
+    }
+
+    private string GetClientStatusTitle(string status)
+    {
+        return status switch
+        {
+            "Новая" => "Заявка принята",
+            "В обработке" => "Заявка в работе",
+            "Оценена" => "Оценка готова",
+            "Завершена" => "Заявка завершена",
+            _ => "Статус заявки"
+        };
+    }
+
+    private string GetClientStatusDescription(string status)
+    {
+        return status switch
+        {
+            "Новая" =>
+                "Мы получили вашу заявку. Оценщик скоро проверит данные автомобиля и повреждения.",
+
+            "В обработке" =>
+                "Оценщик изучает информацию по заявке, фото и выбранные повреждения.",
+
+            "Оценена" =>
+                "Предварительная стоимость рассчитана. Вы можете скачать PDF с деталями оценки.",
+
+            "Завершена" =>
+                "Заявка закрыта. Если потребуется повторная оценка, создайте новую заявку.",
+
+            _ =>
+                "Информация по заявке обновляется."
+        };
+    }
     private string errorMessage = "";
+    private string successMessage = "";
     private string searchText = "";
     private string statusFilter = "";
+
     private decimal previewCost;
     private decimal previewBasePrice;
     private decimal previewDamageMultiplier;
     private decimal previewBrandMultiplier;
+
+    private List<DamageCartItem> damageCart = new();
+    private string selectedSinglePart = string.Empty;
+    private class DamageCartItem
+    {
+        public string PartName { get; set; } = "";
+        public string DamagePreset { get; set; } = "";
+        public string RepairType { get; set; } = "";
+        public string DamageLevel { get; set; } = "";
+        public decimal BasePrice { get; set; }
+        public decimal Cost { get; set; }
+    }
+    private async Task AddDamageToCart()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(selectedSinglePart))
+        {
+            errorMessage = "Выберите повреждённую деталь на схеме.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedDamagePreset))
+        {
+            errorMessage = "Выберите тип повреждения.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newRequest.RepairType))
+        {
+            errorMessage = "Выберите тип ремонта.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newRequest.DamageLevel))
+        {
+            errorMessage = "Выберите степень повреждения.";
+            return;
+        }
+
+        var itemCost = await CalculateSingleDamageCostAsync(
+            selectedSinglePart,
+            newRequest.RepairType,
+            newRequest.DamageLevel);
+
+        if (itemCost <= 0)
+        {
+            errorMessage = $"Не удалось рассчитать стоимость для детали: {selectedSinglePart}. Проверьте прайс-лист.";
+            return;
+        }
+
+        var basePrice = await GetBasePriceForPartAsync(selectedSinglePart, newRequest.RepairType);
+
+        damageCart.Add(new DamageCartItem
+        {
+            PartName = selectedSinglePart,
+            DamagePreset = selectedDamagePreset,
+            RepairType = newRequest.RepairType,
+            DamageLevel = newRequest.DamageLevel,
+            BasePrice = basePrice,
+            Cost = itemCost
+        });
+
+        SyncCartToRequest();
+        UpdatePreviewFromCart();
+
+        ClearDamageSelection();
+    }
+    private async Task<decimal> GetBasePriceForPartAsync(string partName, string repairType)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var pricePartName = NormalizePartForPrice(partName);
+
+        var priceItem = await db.RepairPriceItems
+            .FirstOrDefaultAsync(x =>
+                x.PartName == pricePartName &&
+                x.RepairType == repairType);
+
+        return priceItem?.BasePrice ?? 0;
+    }
+
+    private async Task<decimal> CalculateSingleDamageCostAsync(string partName, string repairType, string damageLevel)
+    {
+        var basePrice = await GetBasePriceForPartAsync(partName, repairType);
+
+        if (basePrice <= 0)
+            return 0;
+
+        var damageMultiplier = GetDamageMultiplier(damageLevel);
+        var brandMultiplier = GetBrandMultiplier(newRequest.CarBrand);
+
+        return Math.Round(basePrice * damageMultiplier * brandMultiplier, 0);
+    }
+
+    private void RemoveDamageFromCart(DamageCartItem item)
+    {
+        damageCart.Remove(item);
+
+        SyncCartToRequest();
+        UpdatePreviewFromCart();
+    }
+
+    private void ClearDamageSelection()
+    {
+        selectedSinglePart = string.Empty;
+        selectedDamageParts.Clear();
+        selectedDamagePreset = string.Empty;
+
+        newRequest.RepairType = string.Empty;
+        newRequest.DamageLevel = string.Empty;
+
+        SyncSelectedDamageParts();
+    }
+
+    private void SyncCartToRequest()
+    {
+        if (damageCart.Count == 0)
+        {
+            newRequest.DamagedPart = string.Empty;
+            newRequest.RepairType = string.Empty;
+            newRequest.DamageLevel = string.Empty;
+            return;
+        }
+
+        // Важно: сохраняем не только название детали, но и параметры каждой позиции.
+        // Это позволяет PDF-акту показывать несколько повреждений отдельными строками
+        // без создания дополнительной таблицы в базе данных.
+        newRequest.DamagedPart = string.Join("\n", damageCart.Select(x =>
+            $"{x.PartName} — {x.DamagePreset} / {x.RepairType} / {x.DamageLevel} / {x.Cost:N0} ₽"));
+
+        newRequest.RepairType = damageCart.Select(x => x.RepairType).Distinct().Count() == 1
+            ? damageCart.First().RepairType
+            : "Смешанный";
+
+        newRequest.DamageLevel = damageCart.Select(x => x.DamageLevel).Distinct().Count() == 1
+            ? damageCart.First().DamageLevel
+            : "Смешанное";
+    }
+
+    private void UpdatePreviewFromCart()
+    {
+        previewBasePrice = damageCart.Sum(x => x.BasePrice);
+        previewCost = damageCart.Sum(x => x.Cost);
+
+        previewDamageMultiplier = 0;
+        previewBrandMultiplier = GetBrandMultiplier(newRequest.CarBrand);
+    }
     private List<RepairRequest> requests = new();
+    private RepairRequest? selectedRequest;
+    private string openedPhotoPath = "";
+    private void OpenPhotoViewer(string? photoPath)
+    {
+        if (string.IsNullOrWhiteSpace(photoPath))
+            return;
+
+        openedPhotoPath = photoPath;
+    }
+
+    private void ClosePhotoViewer()
+    {
+        openedPhotoPath = "";
+    }
+    private void OpenRequestDetails(RepairRequest request)
+    {
+        selectedRequest = request;
+    }
+
+    private void CloseRequestDetails()
+    {
+        selectedRequest = null;
+        openedPhotoPath = "";
+    }
+
+    private async Task ChangeSelectedRequestStatus(string status)
+    {
+        if (selectedRequest is null)
+            return;
+
+        await UpdateStatus(selectedRequest.Id, status);
+
+        selectedRequest.Status = status;
+
+        var item = requests.FirstOrDefault(x => x.Id == selectedRequest.Id);
+
+        if (item is not null)
+        {
+            item.Status = status;
+        }
+
+        await StatsNotifier.NotifyChangedAsync();
+    }
+    private bool HasHeadlightSelected()
+    {
+        return selectedDamageParts.Any(x => x.Contains("фара", StringComparison.OrdinalIgnoreCase)) ||
+               selectedSinglePart.Contains("фара", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsHeadlightAllowedPreset(string presetName)
+    {
+        return presetName == "Царапина" ||
+               presetName == "Скол" ||
+               presetName == "Замена детали";
+    }
+
+    private bool IsDamagePresetDisabled(string presetName)
+    {
+        return HasHeadlightSelected() && !IsHeadlightAllowedPreset(presetName);
+    }
+
+    private void ValidateDamagePresetForSelectedParts()
+    {
+        if (!HasHeadlightSelected())
+            return;
+
+        if (string.IsNullOrWhiteSpace(selectedDamagePreset))
+            return;
+
+        if (IsHeadlightAllowedPreset(selectedDamagePreset))
+            return;
+
+        selectedDamagePreset = string.Empty;
+        newRequest.RepairType = string.Empty;
+        newRequest.DamageLevel = string.Empty;
+    }
+    private string GetBodySvgClass()
+    {
+        return selectedBodyType switch
+        {
+            "Седан" => "svg-sedan",
+            "Хэтчбек" => "svg-hatchback",
+            "SUV" => "svg-suv",
+            "Универсал" => "svg-wagon",
+            "Купе" => "svg-coupe",
+            _ => "svg-sedan"
+        };
+    }
+    private string GetBodyUnderlayClass()
+    {
+        return selectedBodyType switch
+        {
+            "Седан" => "underlay-sedan",
+            "Хэтчбек" => "underlay-hatchback",
+            "SUV" => "underlay-suv",
+            "Универсал" => "underlay-wagon",
+            "Купе" => "underlay-coupe",
+            _ => "underlay-sedan"
+        };
+    }
 
     private RepairRequest newRequest = new()
     {
@@ -369,7 +2601,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadRequests();
+        shouldScrollToRequests = Navigation.Uri.Contains("#requests-list");
 
         await using var db = await DbFactory.CreateDbContextAsync();
 
@@ -384,6 +2616,41 @@
             .Distinct()
             .OrderBy(x => x)
             .ToList();
+
+        await LoadRequests();
+
+        if (PendingAiDamageState.HasItems)
+        {
+            await ApplyPendingAiDamagesAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        if (!UserState.CanSeeAllRequests)
+        {
+            var ownerKey = await JS.InvokeAsync<string>("localStorage.getItem", "autoestimate_owner_key");
+
+            if (string.IsNullOrWhiteSpace(ownerKey))
+            {
+                ownerKey = Guid.NewGuid().ToString("N");
+                await JS.InvokeVoidAsync("localStorage.setItem", "autoestimate_owner_key", ownerKey);
+            }
+
+            UserState.UserKey = ownerKey;
+            await LoadRequests();
+            await InvokeAsync(StateHasChanged);
+        }
+
+        if (shouldScrollToRequests)
+        {
+            await Task.Delay(120);
+            await JS.InvokeVoidAsync("scrollToElementById", "requests-list");
+            shouldScrollToRequests = false;
+        }
     }
 
     private async Task ResetFilters()
@@ -394,41 +2661,317 @@
         await LoadRequests();
     }
 
+    private void SelectBodyType(string bodyType)
+    {
+        selectedBodyType = bodyType;
+
+        selectedDamageParts = selectedDamageParts
+            .Where(IsDamagePartAvailableForCurrentBody)
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(selectedSinglePart) &&
+            !IsDamagePartAvailableForCurrentBody(selectedSinglePart))
+        {
+            selectedSinglePart = string.Empty;
+        }
+
+        ValidateDamagePresetForSelectedParts();
+        SyncSelectedDamageParts();
+    }
+
+    private string GetBodyTypeClass(string bodyType)
+    {
+        return selectedBodyType == bodyType
+            ? "body-type-tab active"
+            : "body-type-tab";
+    }
+
+    private void SelectDamagePart(string partName)
+    {
+        if (!IsDamagePartAvailableForCurrentBody(partName))
+            return;
+
+        selectedSinglePart = partName;
+        selectedDamageParts.Clear();
+        selectedDamageParts.Add(partName);
+
+        ValidateDamagePresetForSelectedParts();
+        SyncSelectedDamageParts();
+    }
+
+    private void ApplyHeadlightRepairRule()
+    {
+        var hasHeadlightSelected =
+        selectedDamageParts.Any(x => x.Contains("фара", StringComparison.OrdinalIgnoreCase));
+
+        var headlightRequiresReplacement =
+            selectedDamagePreset == "Царапина" ||
+            selectedDamagePreset == "Скол" ||
+            selectedDamagePreset == "Замена детали";
+
+        if (hasHeadlightSelected && headlightRequiresReplacement)
+        {
+            newRequest.RepairType = "Замена";
+        }
+    }
+
+    private void SyncSelectedDamageParts()
+    {
+        newRequest.DamagedPart = string.Join(", ", selectedDamageParts);
+    }
+
+    private string GetSelectedPartsText()
+    {
+        if (selectedDamageParts.Count > 0)
+            return string.Join(", ", selectedDamageParts);
+
+        if (damageCart.Count > 0)
+            return string.Join(", ", damageCart.Select(x => x.PartName).Distinct());
+
+        return "Выберите одну или несколько деталей";
+    }
+
+    private string NormalizePartForPrice(string partName)
+    {
+        if (string.IsNullOrWhiteSpace(partName))
+            return partName;
+
+        if (partName.Contains("крыл", StringComparison.OrdinalIgnoreCase))
+            return "Крыло";
+
+        if (partName.Contains("фара", StringComparison.OrdinalIgnoreCase))
+            return "Фара";
+
+        if (partName.Contains("двер", StringComparison.OrdinalIgnoreCase))
+            return "Дверь";
+
+        return partName.Trim();
+    }
+
+    private string GetPartDotClass(string partName)
+    {
+        return partName switch
+        {
+            "Передний бампер" => "part-dot front",
+            "Капот" => "part-dot hood",
+
+            "Переднее левое крыло" => "part-dot fender",
+            "Переднее правое крыло" => "part-dot fender",
+            "Заднее левое крыло" => "part-dot rear-fender",
+            "Заднее правое крыло" => "part-dot rear-fender",
+
+            "Передняя левая дверь" => "part-dot door-front",
+            "Передняя правая дверь" => "part-dot door-front",
+            "Задняя левая дверь" => "part-dot door-rear",
+            "Задняя правая дверь" => "part-dot door-rear",
+            "Левая дверь" => "part-dot door-front",
+            "Правая дверь" => "part-dot door-front",
+
+            "Передняя левая фара" => "part-dot light-front",
+            "Передняя правая фара" => "part-dot light-front",
+            "Задняя левая фара" => "part-dot light-rear",
+            "Задняя правая фара" => "part-dot light-rear",
+
+            "Порог" => "part-dot sill",
+            "Крышка багажника" => "part-dot trunk",
+            "Задний бампер" => "part-dot rear",
+            _ => "part-dot"
+        };
+    }
+
+    private string GetPartListClass(string partName)
+    {
+        return selectedDamageParts.Contains(partName)
+            ? "damage-part-item active"
+            : "damage-part-item";
+    }
+
+    private void SelectDamagePreset(string presetName, string repairType, string damageLevel)
+    {
+        if (IsDamagePresetDisabled(presetName))
+            return;
+
+        selectedDamagePreset = presetName;
+        newRequest.RepairType = repairType;
+        newRequest.DamageLevel = damageLevel;
+    }
+
+    private string GetDamagePresetClass(string presetName)
+    {
+        var cssClass = selectedDamagePreset == presetName
+            ? "damage-chip active"
+            : "damage-chip";
+
+        if (IsDamagePresetDisabled(presetName))
+        {
+            cssClass += " disabled";
+        }
+
+        return cssClass;
+    }
+
+    private string GetSvgZoneClass(string partName, string className)
+    {
+        return selectedDamageParts.Contains(partName)
+            ? $"{className} active"
+            : className;
+    }
+
+    private string GetRearDeckLabel()
+    {
+        return selectedBodyType switch
+        {
+            "Хэтчбек" => "Хэтчбек",
+            "SUV" => "Багажник",
+            "Универсал" => "Багажник",
+            "Купе" => "Багажник",
+            _ => "Багажник"
+        };
+    }
+
+    private string GetVehicleShellPathV2()
+    {
+        return selectedBodyType switch
+        {
+            "SUV" =>
+                "M260 34 C352 34 414 88 434 170 L454 324 L454 520 C446 640 370 724 260 734 C150 724 74 640 66 520 L66 324 L86 170 C106 88 168 34 260 34 Z",
+
+            "Хэтчбек" =>
+                "M260 42 C344 42 400 90 420 166 L436 318 L426 514 C412 632 346 714 260 730 C174 714 108 632 94 514 L84 318 L100 166 C120 90 176 42 260 42 Z",
+
+            "Универсал" =>
+                "M260 32 C354 32 412 78 430 150 L450 322 L450 548 C438 656 366 724 260 734 C154 724 82 656 70 548 L70 322 L90 150 C108 78 166 32 260 32 Z",
+
+            "Купе" =>
+                "M260 70 C332 70 382 112 396 182 L408 324 L400 488 C390 586 334 664 260 680 C186 664 130 586 120 488 L112 324 L124 182 C138 112 188 70 260 70 Z",
+
+            _ =>
+                "M260 38 C348 38 406 88 426 166 L444 322 L438 522 C426 636 358 716 260 732 C162 716 94 636 82 522 L76 322 L94 166 C114 88 172 38 260 38 Z"
+        };
+    }
+
+    private string GetCabinPathV2()
+    {
+        return selectedBodyType switch
+        {
+            "SUV" =>
+                "M180 238 Q260 204 340 238 L362 494 Q332 550 260 568 Q188 550 158 494 Z",
+
+            "Хэтчбек" =>
+                "M182 244 Q260 210 338 244 L352 472 Q326 530 260 554 Q194 530 168 472 Z",
+
+            "Универсал" =>
+                "M176 222 Q260 192 344 222 L368 514 Q336 566 260 584 Q184 566 152 514 Z",
+
+            "Купе" =>
+                "M192 260 Q260 226 328 260 L340 456 Q316 504 260 524 Q204 504 180 456 Z",
+
+            _ =>
+                "M180 242 Q260 208 340 242 L360 492 Q330 544 260 562 Q190 544 160 492 Z"
+        };
+    }
+
+    private string GetFrontGlassPathV2()
+    {
+        return selectedBodyType switch
+        {
+            "Купе" =>
+                "M202 220 Q260 198 318 220 L330 262 Q296 276 260 278 Q224 276 190 262 Z",
+
+            "SUV" =>
+                "M194 204 Q260 180 326 204 L342 252 Q300 268 260 270 Q220 268 178 252 Z",
+
+            _ =>
+                "M196 210 Q260 186 324 210 L338 258 Q298 272 260 274 Q222 272 182 258 Z"
+        };
+    }
+
+    private string GetRearGlassPathV2()
+    {
+        return selectedBodyType switch
+        {
+            "Хэтчбек" =>
+                "M190 462 Q224 444 260 440 Q296 444 330 462 L318 520 Q288 540 260 544 Q232 540 202 520 Z",
+
+            "SUV" =>
+                "M188 476 Q224 458 260 454 Q296 458 332 476 L326 542 Q292 560 260 564 Q228 560 194 542 Z",
+
+            "Универсал" =>
+                "M184 486 Q224 466 260 462 Q296 466 336 486 L332 552 Q294 570 260 574 Q226 570 188 552 Z",
+
+            "Купе" =>
+                "M200 438 Q230 424 260 422 Q290 424 320 438 L310 488 Q284 504 260 508 Q236 504 210 488 Z",
+
+            _ =>
+                "M192 466 Q226 448 260 444 Q294 448 328 466 L320 526 Q290 544 260 548 Q230 544 200 526 Z"
+        };
+    }
+
+    private string GetRearDeckPathV2()
+    {
+        return selectedBodyType switch
+        {
+            "Хэтчбек" =>
+                "M186 544 Q260 520 334 544 L344 610 Q332 638 302 648 L218 648 Q188 638 176 610 Z",
+
+            "SUV" =>
+                "M178 548 Q260 526 342 548 L354 620 Q340 652 306 664 L214 664 Q180 652 166 620 Z",
+
+            "Универсал" =>
+                "M176 554 Q260 532 344 554 L356 626 Q340 656 304 666 L216 666 Q180 656 164 626 Z",
+
+            "Купе" =>
+                "M194 520 Q260 500 326 520 L336 590 Q324 618 296 628 L224 628 Q196 618 184 590 Z",
+
+            _ =>
+                "M186 538 Q260 516 334 538 L346 608 Q332 636 302 646 L218 646 Q188 636 174 608 Z"
+        };
+    }
+
     private async Task UpdatePreviewCost()
     {
         errorMessage = "";
 
-        await using var db = await DbFactory.CreateDbContextAsync();
-
-        var priceItem = await db.RepairPriceItems
-            .FirstOrDefaultAsync(x =>
-                x.PartName == newRequest.DamagedPart &&
-                x.RepairType == newRequest.RepairType);
-
-        if (priceItem is null)
+        if (damageCart.Count == 0)
         {
-            previewCost = 0;
-            previewBasePrice = 0;
-            previewDamageMultiplier = 0;
-            previewBrandMultiplier = 0;
-            previewBasePrice = 0;
-            previewDamageMultiplier = 0;
-            previewBrandMultiplier = 0;
-
-            errorMessage = "Не удалось рассчитать стоимость. Проверьте выбранные параметры и прайс-лист.";
+            ResetPreview();
+            errorMessage = "Добавьте хотя бы одно повреждение в корзину.";
             return;
         }
 
-        previewBasePrice = priceItem.BasePrice;
-        previewDamageMultiplier = GetDamageMultiplier(newRequest.DamageLevel);
+        decimal totalCost = 0;
+        decimal totalBasePrice = 0;
+
+        foreach (var item in damageCart)
+        {
+            item.BasePrice = await GetBasePriceForPartAsync(item.PartName, item.RepairType);
+            item.Cost = await CalculateSingleDamageCostAsync(item.PartName, item.RepairType, item.DamageLevel);
+
+            if (item.Cost <= 0)
+            {
+                ResetPreview();
+                errorMessage = $"Не удалось рассчитать стоимость для детали: {item.PartName}.";
+                return;
+            }
+
+            totalBasePrice += item.BasePrice;
+            totalCost += item.Cost;
+        }
+
+        previewBasePrice = totalBasePrice;
+        previewCost = totalCost;
+        previewDamageMultiplier = 0;
         previewBrandMultiplier = GetBrandMultiplier(newRequest.CarBrand);
 
-        previewCost = Math.Round(previewBasePrice * previewDamageMultiplier * previewBrandMultiplier, 0);
+        SyncCartToRequest();
+    }
 
-        if (previewCost <= 0)
-        {
-            errorMessage = "Не удалось рассчитать стоимость. Проверьте выбранные параметры и прайс-лист.";
-        }
+    private void ResetPreview()
+    {
+        previewCost = 0;
+        previewBasePrice = 0;
+        previewDamageMultiplier = 0;
+        previewBrandMultiplier = 0;
     }
 
     private void OnBrandChanged(ChangeEventArgs e)
@@ -454,8 +2997,6 @@
         newRequest.CarGeneration = string.Empty;
         newRequest.CarYear = 0;
     }
-
-
 
     private void OnModelChanged(ChangeEventArgs e)
     {
@@ -516,6 +3057,11 @@
 
         var query = db.RepairRequests.AsQueryable();
 
+        if (!UserState.CanSeeAllRequests)
+        {
+            query = query.Where(x => x.OwnerKey == UserState.UserKey);
+        }
+
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             query = query.Where(x =>
@@ -535,22 +3081,9 @@
             .ToListAsync();
     }
 
-    private async Task<decimal> CalculateCurrentCostAsync()
+    private Task<decimal> CalculateCurrentCostAsync()
     {
-        await using var db = await DbFactory.CreateDbContextAsync();
-
-        var priceItem = await db.RepairPriceItems
-            .FirstOrDefaultAsync(x =>
-                x.PartName == newRequest.DamagedPart &&
-                x.RepairType == newRequest.RepairType);
-
-        if (priceItem is null)
-            return 0;
-
-        decimal damageMultiplier = GetDamageMultiplier(newRequest.DamageLevel);
-        decimal brandMultiplier = GetBrandMultiplier(newRequest.CarBrand);
-
-        return Math.Round(priceItem.BasePrice * damageMultiplier * brandMultiplier, 0);
+        return Task.FromResult(damageCart.Sum(x => x.Cost));
     }
 
     private decimal GetBrandMultiplier(string brand)
@@ -590,6 +3123,7 @@
     private async Task AddRequest()
     {
         errorMessage = "";
+        successMessage = "";
 
         if (string.IsNullOrWhiteSpace(newRequest.ClientName))
         {
@@ -621,10 +3155,17 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(newRequest.DamagedPart))
+        if (damageCart.Count == 0)
         {
-            errorMessage = "Выберите повреждённую деталь.";
+            errorMessage = "Добавьте хотя бы одно повреждение в корзину.";
             return;
+        }
+
+        SyncCartToRequest();
+
+        if (!UserState.CanChangeRequestStatus)
+        {
+            newRequest.Status = "Новая";
         }
 
         if (string.IsNullOrWhiteSpace(newRequest.RepairType))
@@ -647,31 +3188,25 @@
             return;
         }
 
-        // var photoPath = await SavePhotoAsync();
-
-        // if (!string.IsNullOrWhiteSpace(errorMessage))
-        // {
-        //     return;
-        // }
-
-        // if (!string.IsNullOrWhiteSpace(photoPath))
-        // {
-        //     newRequest.PhotoPath = photoPath;
-        // }
         var uploadedPhotoPath = await JS.InvokeAsync<string>("getInputValue", "repairPhotoPath");
 
         if (!string.IsNullOrWhiteSpace(uploadedPhotoPath))
         {
             newRequest.PhotoPath = uploadedPhotoPath;
         }
+
         await using var db = await DbFactory.CreateDbContextAsync();
 
-            db.RepairRequests.Add(newRequest);
-            await db.SaveChangesAsync();
+        newRequest.OwnerKey = UserState.UserKey;
 
-        previewCost = 0;
+        db.RepairRequests.Add(newRequest);
+        await db.SaveChangesAsync();
+
+        var createdRequestId = newRequest.Id;
+        successMessage = $"Заявка №{createdRequestId} успешно создана. Вы можете отслеживать её статус в разделе “Мои заявки”.";
+        ResetPreview();
+
         await JS.InvokeVoidAsync("clearRepairPhoto");
-        
 
         newRequest = new RepairRequest
         {
@@ -684,15 +3219,28 @@
         selectedGeneration = string.Empty;
         selectedYear = 0;
 
+        selectedBodyType = "Седан";
+        selectedDamagePreset = string.Empty;
+        selectedDamageParts.Clear();
+        selectedSinglePart = string.Empty;
+        damageCart.Clear();
+
         models.Clear();
         generations.Clear();
         years.Clear();
 
         await LoadRequests();
+        await StatsNotifier.NotifyChangedAsync();
     }
 
     private async Task DeleteRequest(int id)
     {
+        if (!UserState.CanSeeAllRequests)
+        {
+            errorMessage = "У вас нет прав на удаление заявки.";
+            return;
+        }
+
         await using var db = await DbFactory.CreateDbContextAsync();
 
         var request = await db.RepairRequests.FindAsync(id);
@@ -702,12 +3250,23 @@
 
         db.RepairRequests.Remove(request);
         await db.SaveChangesAsync();
+        if (selectedRequest?.Id == id)
+        {
+            selectedRequest = null;
+        }
 
         await LoadRequests();
+        await StatsNotifier.NotifyChangedAsync();
     }
 
     private async Task UpdateStatus(int id, string status)
     {
+        if (!UserState.CanChangeRequestStatus)
+        {
+            errorMessage = "У вас нет прав на изменение статуса заявки.";
+            return;
+        }
+
         await using var db = await DbFactory.CreateDbContextAsync();
 
         var request = await db.RepairRequests.FindAsync(id);
@@ -720,6 +3279,7 @@
         await db.SaveChangesAsync();
 
         await LoadRequests();
+        await StatsNotifier.NotifyChangedAsync();
     }
 
     private string GetStatusBadgeClass(string status)
@@ -743,6 +3303,12 @@
         if (request is null)
             return;
 
+        if (!UserState.CanSeeAllRequests && request.OwnerKey != UserState.UserKey)
+        {
+            errorMessage = "У вас нет прав на скачивание этой заявки.";
+            return;
+        }
+
         var pdfBytes = GeneratePdf(request);
         var base64 = Convert.ToBase64String(pdfBytes);
 
@@ -754,47 +3320,518 @@
 
     private byte[] GeneratePdf(RepairRequest request)
     {
+        var photoBytes = TryGetPhotoBytes(request.PhotoPath);
+        var brandMultiplier = GetBrandMultiplier(request.CarBrand);
+
         return Document.Create(container =>
         {
             container.Page(page =>
             {
-                page.Margin(40);
                 page.Size(PageSizes.A4);
+                page.Margin(32);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken3));
 
                 page.Header()
-                    .Text("Оценка стоимости кузовного ремонта")
-                    .FontSize(20)
-                    .Bold();
+                    .Element(header =>
+                    {
+                        header
+                            .Background(Colors.Blue.Darken4)
+                            .Padding(18)
+                            .Column(column =>
+                            {
+                                column.Spacing(6);
+
+                                column.Item()
+                                    .Row(row =>
+                                    {
+                                        row.RelativeItem()
+                                            .Column(title =>
+                                            {
+                                                title.Item()
+                                                    .Text("AutoEstimate")
+                                                    .FontSize(22)
+                                                    .Bold()
+                                                    .FontColor(Colors.White);
+
+                                                title.Item()
+                                                    .Text("Акт предварительной оценки кузовного ремонта")
+                                                    .FontSize(12)
+                                                    .FontColor(Colors.Blue.Lighten4);
+                                            });
+
+                                        row.ConstantItem(155)
+                                            .AlignRight()
+                                            .Column(meta =>
+                                            {
+                                                meta.Item()
+                                                    .AlignRight()
+                                                    .Text($"Заявка №{request.Id}")
+                                                    .FontSize(14)
+                                                    .Bold()
+                                                    .FontColor(Colors.White);
+
+                                                meta.Item()
+                                                    .AlignRight()
+                                                    .Text($"Сформировано: {DateTime.Now:dd.MM.yyyy HH:mm}")
+                                                    .FontSize(9)
+                                                    .FontColor(Colors.Blue.Lighten4);
+                                            });
+                                    });
+                            });
+                    });
 
                 page.Content()
-                    .PaddingVertical(20)
+                    .PaddingTop(18)
                     .Column(column =>
                     {
-                        column.Spacing(10);
-
-                        column.Item().Text($"Номер заявки: {request.Id}");
-                        column.Item().Text($"Клиент: {request.ClientName}");
-                        column.Item().Text($"Телефон: {request.Phone}");
-                        column.Item().Text($"Автомобиль: {request.CarBrand} {request.CarModel}, {request.CarGeneration}, {request.CarYear}");
-                        
-                        column.Item().Text($"Повреждённая деталь: {request.DamagedPart}");
-                        column.Item().Text($"Тип ремонта: {request.RepairType}");
-                        column.Item().Text($"Степень повреждения: {request.DamageLevel}");
-                        column.Item().Text($"Коэффициент марки: x{GetBrandMultiplier(request.CarBrand)}");
-                        column.Item().Text($"Статус: {request.Status}");
-                        column.Item().Text($"Дата заявки: {request.CreatedAt:dd.MM.yyyy HH:mm}");
+                        column.Spacing(14);
 
                         column.Item()
-                            .PaddingTop(15)
-                            .Text($"Итоговая стоимость: {request.CalculatedCost:N0} ₽")
-                            .FontSize(18)
-                            .Bold();
+                            .Row(row =>
+                            {
+                                row.RelativeItem()
+                                    .Element(box =>
+                                    {
+                                        BuildInfoCard(
+                                            box,
+                                            "Данные клиента",
+                                            new[]
+                                            {
+                                                ("Клиент", SafeText(request.ClientName)),
+                                                ("Телефон", SafeText(request.Phone)),
+                                                ("Дата заявки", request.CreatedAt.ToString("dd.MM.yyyy HH:mm")),
+                                                ("Статус", SafeText(request.Status))
+                                            });
+                                    });
+
+                                row.ConstantItem(14);
+
+                                row.RelativeItem()
+                                    .Element(box =>
+                                    {
+                                        BuildInfoCard(
+                                            box,
+                                            "Автомобиль",
+                                            new[]
+                                            {
+                                                ("Марка", SafeText(request.CarBrand)),
+                                                ("Модель", SafeText(request.CarModel)),
+                                                ("Поколение", SafeText(request.CarGeneration)),
+                                                ("Год выпуска", request.CarYear.ToString())
+                                            });
+                                    });
+                            });
+
+                        column.Item()
+                            .Element(box =>
+                            {
+                                BuildDamageCard(box, request);
+                            });
+
+                        column.Item()
+                            .Row(row =>
+                            {
+                                row.RelativeItem()
+                                    .Element(box =>
+                                    {
+                                        BuildPhotoCard(box, photoBytes);
+                                    });
+
+                                row.ConstantItem(14);
+
+                                row.ConstantItem(210)
+                                    .Element(box =>
+                                    {
+                                        BuildPriceCard(box, request, brandMultiplier);
+                                    });
+                            });
+
+                        column.Item()
+                            .Element(box =>
+                            {
+                                box
+                                    .Border(1)
+                                    .BorderColor(Colors.Grey.Lighten2)
+                                    .Background(Colors.Grey.Lighten5)
+                                    .Padding(12)
+                                    .Column(note =>
+                                    {
+                                        note.Spacing(5);
+
+                                        note.Item()
+                                            .Text("Примечание")
+                                            .FontSize(11)
+                                            .Bold()
+                                            .FontColor(Colors.Grey.Darken4);
+
+                                        note.Item()
+                                            .Text("Данный документ является предварительной оценкой стоимости кузовного ремонта. Итоговая стоимость может быть скорректирована после очного осмотра автомобиля специалистом.")
+                                            .FontSize(9)
+                                            .FontColor(Colors.Grey.Darken2);
+                                    });
+                            });
                     });
 
                 page.Footer()
-                    .AlignCenter()
-                    .Text("Документ сформирован автоматически");
+                    .PaddingTop(12)
+                    .Row(row =>
+                    {
+                        row.RelativeItem()
+                            .Text("Документ сформирован автоматически в системе AutoEstimate")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Medium);
+
+                        row.ConstantItem(120)
+                            .AlignRight()
+                            .Text(text =>
+                            {
+                                text.Span("Страница ").FontSize(9).FontColor(Colors.Grey.Medium);
+                                text.CurrentPageNumber().FontSize(9).FontColor(Colors.Grey.Medium);
+                            });
+                    });
             });
         }).GeneratePdf();
     }
+
+    private static string SafeText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "Не указано" : value;
+    }
+
+    private byte[]? TryGetPhotoBytes(string? photoPath)
+    {
+        if (string.IsNullOrWhiteSpace(photoPath))
+            return null;
+
+        try
+        {
+            var normalizedPath = photoPath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString());
+            var fullPath = Path.Combine(Env.WebRootPath, normalizedPath);
+
+            if (!File.Exists(fullPath))
+                return null;
+
+            return File.ReadAllBytes(fullPath);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void BuildInfoCard(
+        IContainer container,
+        string title,
+        IEnumerable<(string Label, string Value)> rows)
+    {
+        container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Background(Colors.White)
+            .Padding(12)
+            .Column(column =>
+            {
+                column.Spacing(8);
+
+                column.Item()
+                    .Text(title)
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Blue.Darken4);
+
+                foreach (var row in rows)
+                {
+                    column.Item()
+                        .Column(item =>
+                        {
+                            item.Item()
+                                .Text(row.Label)
+                                .FontSize(8)
+                                .FontColor(Colors.Grey.Medium);
+
+                            item.Item()
+                                .Text(row.Value)
+                                .FontSize(10)
+                                .SemiBold()
+                                .FontColor(Colors.Grey.Darken4);
+                        });
+                }
+            });
+    }
+
+    private class PdfDamageRow
+    {
+        public string PartName { get; set; } = "Не указано";
+        public string DamagePreset { get; set; } = "Не указано";
+        public string RepairType { get; set; } = "Не указано";
+        public string DamageLevel { get; set; } = "Не указано";
+        public string CostText { get; set; } = "—";
+    }
+
+    private static List<PdfDamageRow> ParseDamageRows(RepairRequest request)
+    {
+        var result = new List<PdfDamageRow>();
+
+        if (string.IsNullOrWhiteSpace(request.DamagedPart))
+        {
+            result.Add(new PdfDamageRow
+            {
+                PartName = "Не указано",
+                DamagePreset = "Не указано",
+                RepairType = SafeText(request.RepairType),
+                DamageLevel = SafeText(request.DamageLevel),
+                CostText = request.CalculatedCost > 0 ? $"{request.CalculatedCost:N0} ₽" : "—"
+            });
+
+            return result;
+        }
+
+        var lines = request.DamagedPart
+            .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+        // Новый формат: Деталь — Повреждение / Ремонт / Степень / Стоимость ₽
+        foreach (var line in lines)
+        {
+            if (line.Contains('—') && line.Contains('/'))
+            {
+                var mainParts = line.Split('—', 2, StringSplitOptions.TrimEntries);
+                var detail = mainParts.ElementAtOrDefault(0) ?? "Не указано";
+                var tail = mainParts.ElementAtOrDefault(1) ?? "";
+                var values = tail.Split('/', StringSplitOptions.TrimEntries);
+
+                result.Add(new PdfDamageRow
+                {
+                    PartName = SafeText(detail),
+                    DamagePreset = SafeText(values.ElementAtOrDefault(0)),
+                    RepairType = SafeText(values.ElementAtOrDefault(1)),
+                    DamageLevel = SafeText(values.ElementAtOrDefault(2)),
+                    CostText = SafeText(values.ElementAtOrDefault(3))
+                });
+            }
+        }
+
+        if (result.Count > 0)
+            return result;
+
+        // Старый формат: Деталь (Повреждение), Деталь (Повреждение)
+        var oldParts = request.DamagedPart
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+        if (oldParts.Count == 0)
+        {
+            oldParts.Add(request.DamagedPart);
+        }
+
+        var fallbackCost = oldParts.Count == 1 && request.CalculatedCost > 0
+            ? $"{request.CalculatedCost:N0} ₽"
+            : "—";
+
+        foreach (var part in oldParts)
+        {
+            var partName = part;
+            var damagePreset = "Не указано";
+
+            var openIndex = part.IndexOf('(');
+            var closeIndex = part.LastIndexOf(')');
+
+            if (openIndex > 0 && closeIndex > openIndex)
+            {
+                partName = part[..openIndex].Trim();
+                damagePreset = part[(openIndex + 1)..closeIndex].Trim();
+            }
+
+            result.Add(new PdfDamageRow
+            {
+                PartName = SafeText(partName),
+                DamagePreset = SafeText(damagePreset),
+                RepairType = SafeText(request.RepairType),
+                DamageLevel = SafeText(request.DamageLevel),
+                CostText = fallbackCost
+            });
+        }
+
+        return result;
+    }
+
+    private static void BuildDamageCard(IContainer container, RepairRequest request)
+    {
+        var damageRows = ParseDamageRows(request);
+
+        container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Background(Colors.White)
+            .Padding(12)
+            .Column(column =>
+            {
+                column.Spacing(10);
+
+                column.Item()
+                    .Row(row =>
+                    {
+                        row.RelativeItem()
+                            .Text("Повреждения и ремонт")
+                            .FontSize(12)
+                            .Bold()
+                            .FontColor(Colors.Blue.Darken4);
+
+                        row.ConstantItem(130)
+                            .AlignRight()
+                            .Text($"Позиций: {damageRows.Count}")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Medium);
+                    });
+
+                column.Item()
+                    .Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(1.65f);
+                            columns.RelativeColumn(1.15f);
+                            columns.RelativeColumn(1.05f);
+                            columns.RelativeColumn(1.05f);
+                            columns.RelativeColumn(1.05f);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Element(TableHeaderCell).Text("Деталь");
+                            header.Cell().Element(TableHeaderCell).Text("Повреждение");
+                            header.Cell().Element(TableHeaderCell).Text("Ремонт");
+                            header.Cell().Element(TableHeaderCell).Text("Степень");
+                            header.Cell().Element(TableHeaderCell).AlignRight().Text("Стоимость");
+                        });
+
+                        foreach (var row in damageRows)
+                        {
+                            table.Cell().Element(TableBodyCell).Text(row.PartName);
+                            table.Cell().Element(TableBodyCell).Text(row.DamagePreset);
+                            table.Cell().Element(TableBodyCell).Text(row.RepairType);
+                            table.Cell().Element(TableBodyCell).Text(row.DamageLevel);
+                            table.Cell().Element(TableBodyCell).AlignRight().Text(row.CostText);
+                        }
+                    });
+            });
+    }
+
+    private static void BuildPhotoCard(IContainer container, byte[]? photoBytes)
+    {
+        container
+            .Border(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .Background(Colors.White)
+            .Padding(12)
+            .Column(column =>
+            {
+                column.Spacing(10);
+
+                column.Item()
+                    .Text("Фото повреждения")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Blue.Darken4);
+
+                if (photoBytes is not null)
+                {
+                    column.Item()
+                        .Height(190)
+                        .AlignCenter()
+                        .Image(photoBytes)
+                        .FitArea();
+                }
+                else
+                {
+                    column.Item()
+                        .Height(190)
+                        .Border(1)
+                        .BorderColor(Colors.Grey.Lighten2)
+                        .Background(Colors.Grey.Lighten5)
+                        .AlignCenter()
+                        .AlignMiddle()
+                        .Text("Фото к заявке не загружено")
+                        .FontSize(10)
+                        .FontColor(Colors.Grey.Medium);
+                }
+            });
+    }
+
+    private static void BuildPriceCard(
+        IContainer container,
+        RepairRequest request,
+        decimal brandMultiplier)
+    {
+        container
+            .Border(1)
+            .BorderColor(Colors.Blue.Lighten2)
+            .Background(Colors.Blue.Lighten5)
+            .Padding(12)
+            .Column(column =>
+            {
+                column.Spacing(10);
+
+                column.Item()
+                    .Text("Расчёт стоимости")
+                    .FontSize(12)
+                    .Bold()
+                    .FontColor(Colors.Blue.Darken4);
+
+                column.Item()
+                    .Text($"{request.CalculatedCost:N0} ₽")
+                    .FontSize(22)
+                    .Bold()
+                    .FontColor(Colors.Green.Darken2);
+
+                column.Item()
+                    .LineHorizontal(1)
+                    .LineColor(Colors.Blue.Lighten3);
+
+                column.Item()
+                    .Column(details =>
+                    {
+                        details.Spacing(5);
+
+                        details.Item()
+                            .Text($"Коэффициент марки: x{brandMultiplier}")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Darken2);
+
+                        details.Item()
+                            .Text($"Статус заявки: {SafeText(request.Status)}")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Darken2);
+
+                        details.Item()
+                            .Text("Формула: базовая цена × повреждение × марка автомобиля")
+                            .FontSize(8)
+                            .FontColor(Colors.Grey.Medium);
+                    });
+            });
+    }
+
+    private static IContainer TableHeaderCell(IContainer container)
+    {
+        return container
+            .Background(Colors.Blue.Darken4)
+            .PaddingVertical(6)
+            .PaddingHorizontal(7)
+            .DefaultTextStyle(x => x.FontSize(9).Bold().FontColor(Colors.White));
+    }
+
+    private static IContainer TableBodyCell(IContainer container)
+    {
+        return container
+            .BorderBottom(1)
+            .BorderColor(Colors.Grey.Lighten2)
+            .PaddingVertical(7)
+            .PaddingHorizontal(7)
+            .DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Grey.Darken3));
+    }
+
 }

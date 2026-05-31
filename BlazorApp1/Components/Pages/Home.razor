@@ -1,221 +1,273 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
 @using MyBlazorSite.Data
+
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject IJSRuntime JS
+@inject AppUserState UserState
 
-<div class="container mt-4">
+<div class="home-page">
+    <section class="home-welcome-card">
+        <div class="home-welcome-content">
+            <div class="app-icon-box">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 13l2-5h12l2 5" />
+                    <path d="M5 13h14v5H5z" />
+                    <path d="M7 18v1" />
+                    <path d="M17 18v1" />
+                    <circle cx="8" cy="18" r="2" />
+                    <circle cx="16" cy="18" r="2" />
+                </svg>
+            </div>
 
-    <div class="p-5 mb-4 bg-dark text-white rounded shadow">
-        <h1 class="display-5 fw-bold">
-            🚗 Система оценки кузовного ремонта
-        </h1>
+            <div>
+                <h2>Система оценки кузовного ремонта</h2>
+                <p>
+                    Веб-приложение для автоматического расчёта стоимости кузовного ремонта автомобиля после ДТП.
+                </p>
 
-        <p class="fs-5 mt-3">
-            Веб-приложение для автоматического расчёта стоимости
-            кузовного ремонта автомобиля после ДТП.
-        </p>
+                <div class="welcome-actions">
+                    <NavLink class="clean-home-button clean-home-button-primary"
+                             href="@GetRepairRequestsLink()">
+                        Перейти к заявкам
+                    </NavLink>
 
-        <div class="mt-4">
-            <a href="/repair-requests" class="btn btn-success btn-lg me-3">
-                Перейти к заявкам
-            </a>
-
-            <a href="/prices" class="btn btn-warning btn-lg">
-                Админка прайсов
-            </a>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h6 class="text-muted">Всего заявок</h6>
-                    <h2 class="fw-bold">@totalRequests</h2>
+                    @if (UserState.CanManagePrices)
+                    {
+                        <NavLink class="home-action-btn home-action-secondary" href="/prices">
+                            <span class="home-action-icon">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 7h16" />
+                                    <path d="M4 12h16" />
+                                    <path d="M4 17h10" />
+                                    <path d="M17 15l2 2 3-4" />
+                                </svg>
+                            </span>
+                            <span>Админка прайсов</span>
+                        </NavLink>
+                    }
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h6 class="text-muted">В обработке</h6>
-                    <h2 class="fw-bold">@inProgressRequests</h2>
-                </div>
+    <section class="home-stats-grid">
+        <div class="home-stat-card">
+            <span class="home-stat-label">Всего заявок</span>
+            <strong>@totalRequests</strong>
+        </div>
+
+        <div class="home-stat-card">
+            <span class="home-stat-label">В обработке</span>
+            <strong>@inProgressRequests</strong>
+        </div>
+
+        <div class="home-stat-card">
+            <span class="home-stat-label">Завершено</span>
+            <strong>@completedRequests</strong>
+        </div>
+
+        <div class="home-stat-card">
+            <span class="home-stat-label">Общая сумма</span>
+            <strong>@totalAmount.ToString("N0") ₽</strong>
+        </div>
+    </section>
+
+    <section class="home-average-card">
+        <div>
+            <span class="home-stat-label">Средняя стоимость ремонта</span>
+            <strong>@averageAmount.ToString("N0") ₽</strong>
+        </div>
+    </section>
+
+    <section class="home-chart-card">
+        <div class="section-header">
+            <div>
+                <h3>Статистика заявок по статусам</h3>
+                <p>Распределение заявок по текущему состоянию обработки.</p>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h6 class="text-muted">Завершено</h6>
-                    <h2 class="fw-bold">@completedRequests</h2>
-                </div>
+        <div class="chart-shell">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </section>
+
+    <section class="home-shortcuts-grid">
+        <a class="home-shortcut-card" href="/repair-requests">
+            <div class="shortcut-svg-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 6h13" />
+                    <path d="M8 12h13" />
+                    <path d="M8 18h13" />
+                    <path d="M3 6h.01" />
+                    <path d="M3 12h.01" />
+                    <path d="M3 18h.01" />
+                </svg>
             </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 text-center">
-                <div class="card-body">
-                    <h6 class="text-muted">Общая сумма</h6>
-                    <h2 class="fw-bold">
-                        @totalRepairCost.ToString("N0") ₽
-                    </h2>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <h5 class="mb-2">Средняя стоимость ремонта</h5>
-            <h3 class="fw-bold">
-                @averageRepairCost.ToString("N0") ₽
-            </h3>
-        </div>
-    </div>
-
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <h4 class="mb-3">Статистика заявок по статусам</h4>
-
-            <div style="height: 350px;">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h1>📋</h1>
-
-                    <h5 class="card-title mt-3">
-                        Учёт заявок
-                    </h5>
-
-                    <p class="card-text">
-                        Хранение информации о клиентах и повреждениях.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h1>💰</h1>
-
-                    <h5 class="card-title mt-3">
-                        Расчёт стоимости
-                    </h5>
-
-                    <p class="card-text">
-                        Автоматическая оценка ремонта по прайс-листу.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h1>⚙️</h1>
-
-                    <h5 class="card-title mt-3">
-                        Админ-панель
-                    </h5>
-
-                    <p class="card-text">
-                        Управление стоимостью ремонта и услуг.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <a href="/ai-estimate"
-               class="btn btn-lg w-100 text-white"
-               style="
-            background-color:#000000;
-            border:2px solid #00bfff;
-            color:white;
-            font-weight:700;
-            box-shadow:0 0 12px rgba(0,191,255,0.5);">
-            🤖 AI-оценка повреждений
+            <h4>Учёт заявок</h4>
+            <p>Хранение информации о клиентах и повреждениях.</p>
         </a>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <h1>📊</h1>
-
-                    <h5 class="card-title mt-3">
-                        Аналитика
-                    </h5>
-
-                    <p class="card-text">
-                        Контроль заявок и статистика сервиса.
-                    </p>
-                </div>
+        <a class="home-shortcut-card" href="/repair-requests">
+            <div class="shortcut-svg-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2v20" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
             </div>
+            <h4>Расчёт стоимости</h4>
+            <p>Автоматическая оценка ремонта по прайс-листу.</p>
+        </a>
+
+        @if (UserState.CanManagePrices)
+        {
+            <a class="home-shortcut-card" href="/prices">
+                <div class="shortcut-svg-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05a1.8 1.8 0 0 0-2-.36" />
+                        <path d="M9 19.4a1.8 1.8 0 0 0-2 .36l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05a1.8 1.8 0 0 0 .36-2" />
+                        <path d="M4.6 9a1.8 1.8 0 0 0-.36-2l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05a1.8 1.8 0 0 0 2 .36" />
+                        <path d="M15 4.6a1.8 1.8 0 0 0 2-.36l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05a1.8 1.8 0 0 0-.36 2" />
+                    </svg>
+                </div>
+                <h4>Админ-прайсы</h4>
+                <p>Управление стоимостью ремонта и услуг.</p>
+            </a>
+        }
+
+        <a class="home-shortcut-card" href="/ai-damage">
+            <div class="shortcut-svg-icon">
+                <svg viewBox="0 0 24 24">
+                    <rect x="6" y="7" width="12" height="11" rx="3" />
+                    <path d="M9 7V4" />
+                    <path d="M15 7V4" />
+                    <circle cx="10" cy="12" r="1" />
+                    <circle cx="14" cy="12" r="1" />
+                    <path d="M10 16h4" />
+                </svg>
+            </div>
+            <h4>AI-оценка повреждений</h4>
+            <p>Перспективный модуль анализа повреждений по фото.</p>
+        </a>
+    </section>
+
+    <section class="home-features-card">
+        <h3 class="features-title">
+            <span class="features-title-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M20 6L9 17l-5-5" />
+                </svg>
+            </span>
+            Возможности системы
+        </h3>
+
+        <div class="features-list">
+            <div>✓ Автоматический расчёт стоимости ремонта</div>
+            <div>✓ Управление заявками клиентов</div>
+            <div>✓ Указание статуса ремонта</div>
+            <div>✓ Гибкий прайс-лист деталей и работ</div>
+            <div>✓ Поиск и фильтрация заявок</div>
+            <div>✓ Сохранение информации в PostgreSQL</div>
         </div>
-
-    </div>
-
-    <div class="card mt-5 shadow-sm border-0">
-        <div class="card-body">
-
-            <h3 class="mb-4">
-                🔥 Возможности системы
-            </h3>
-
-            <ul class="list-group list-group-flush">
-
-                <li class="list-group-item">
-                    ✔ Автоматический расчёт стоимости ремонта
-                </li>
-
-                <li class="list-group-item">
-                    ✔ Управление заявками клиентов
-                </li>
-
-                <li class="list-group-item">
-                    ✔ Изменение статусов ремонта
-                </li>
-
-                <li class="list-group-item">
-                    ✔ Гибкий прайс-лист деталей и работ
-                </li>
-
-                <li class="list-group-item">
-                    ✔ Поиск и фильтрация заявок
-                </li>
-
-                <li class="list-group-item">
-                    ✔ Современный интерфейс на Blazor
-                </li>
-
-            </ul>
-
-        </div>
-    </div>
-
+    </section>
 </div>
+
+<style>
+    .shortcut-svg-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        color: #bfdbfe;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.24), rgba(124, 58, 237, 0.16)), rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(147, 197, 253, 0.22);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        margin-bottom: 14px;
+    }
+
+        .shortcut-svg-icon svg {
+            width: 22px;
+            height: 22px;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .features-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .features-title-icon {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
+        border-radius: 13px;
+        display: inline-grid;
+        place-items: center;
+        color: #bfdbfe;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.24), rgba(124, 58, 237, 0.16)), rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(147, 197, 253, 0.22);
+    }
+
+        .features-title-icon svg {
+            width: 19px;
+            height: 19px;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+</style>
+
 @code {
-    private int newRequests;
-    private int estimatedRequests;
     private int totalRequests;
+    private int newRequests;
     private int inProgressRequests;
+    private int estimatedRequests;
     private int completedRequests;
-    private decimal totalRepairCost;
-    private decimal averageRepairCost;
+
+    private decimal totalAmount;
+    private decimal averageAmount;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardStatsAsync();
+    }
+
+    private string GetRepairRequestsLink()
+    {
+        return UserState.CanSeeAllRequests
+            ? "/repair-requests#requests-list"
+            : "/repair-requests";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync(
+                "renderStatusChart",
+                newRequests,
+                inProgressRequests,
+                estimatedRequests,
+                completedRequests);
+        }
+    }
+
+    private async Task LoadDashboardStatsAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 
@@ -233,24 +285,11 @@
         completedRequests = await db.RepairRequests
             .CountAsync(x => x.Status == "Завершена");
 
-        totalRepairCost = await db.RepairRequests
+        totalAmount = await db.RepairRequests
             .SumAsync(x => x.CalculatedCost);
 
-        if (totalRequests > 0)
-        {
-            averageRepairCost = await db.RepairRequests
-                .AverageAsync(x => x.CalculatedCost);
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await JS.InvokeVoidAsync(
-            "renderStatusChart",
-            newRequests,
-            inProgressRequests,
-            estimatedRequests,
-            completedRequests
-        );
+        averageAmount = totalRequests > 0
+            ? await db.RepairRequests.AverageAsync(x => x.CalculatedCost)
+            : 0;
     }
 }

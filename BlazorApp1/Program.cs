@@ -2,12 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using MyBlazorSite.Data;
 using MyBlazorSite.Components;
+using MyBlazorSite.Services;
 using QuestPDF.Infrastructure;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<AppUserState>();
+builder.Services.AddScoped<DashboardStatsService>();
+builder.Services.AddScoped<DashboardStatsNotifier>();
+builder.Services.AddScoped<PendingAiDamageState>();
+builder.Services.AddHttpClient<GeminiDamageAssessmentService>();
 QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.Configure<HubOptions>(options =>
 {
