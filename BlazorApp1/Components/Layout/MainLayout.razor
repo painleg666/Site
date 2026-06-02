@@ -2,12 +2,14 @@
 @implements IDisposable
 
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
 @using MyBlazorSite.Data
 
 @inject NavigationManager Navigation
 @inject DashboardStatsService StatsService
 @inject DashboardStatsNotifier StatsNotifier
 @inject AppUserState UserState
+@inject IJSRuntime JS
 
 <style>
     html,
@@ -1928,6 +1930,1006 @@
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+    .theme-toggle-button {
+        height: 42px;
+        min-width: 128px;
+        padding: 0 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(120, 160, 255, 0.20);
+        background: rgba(255, 255, 255, 0.055);
+        color: #ffffff;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+        transition: 0.18s ease;
+    }
+
+        .theme-toggle-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(80, 160, 255, 0.70);
+            background: rgba(13, 110, 253, 0.16);
+        }
+
+    .theme-toggle-icon {
+        width: 20px;
+        height: 20px;
+        display: inline-grid;
+        place-items: center;
+    }
+
+        .theme-toggle-icon svg {
+            width: 19px;
+            height: 19px;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .theme-toggle-label {
+        color: #ffffff;
+        font-size: 13px;
+    }
+
+
+
+/* =========================================================
+   AUTOESTIMATE LIGHT THEME OVERRIDES
+   Toggle class: body.light-theme / html.light-theme
+========================================================= */
+
+html.light-theme,
+body.light-theme {
+    --bg-main: #eef4fb;
+    --bg-sidebar: rgba(255, 255, 255, 0.86);
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-strong: rgba(255, 255, 255, 0.92);
+    --bg-input: rgba(255, 255, 255, 0.90);
+    --border-soft: rgba(31, 70, 130, 0.14);
+    --border-strong: rgba(37, 99, 235, 0.34);
+    --text-main: #102033;
+    --text-muted: #64748b;
+    --text-soft: #475569;
+    --shadow-soft: 0 18px 50px rgba(31, 70, 130, 0.12);
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.12), transparent 34%),
+        #eef4fb !important;
+    color: #102033 !important;
+}
+
+body.light-theme .app-shell {
+    background:
+        linear-gradient(135deg, rgba(238, 244, 251, 0.96), rgba(246, 249, 253, 0.94)) !important;
+    color: #102033 !important;
+}
+
+body.light-theme .app-sidebar {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(232, 240, 250, 0.88)),
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 36%) !important;
+    border-right: 1px solid rgba(31, 70, 130, 0.14) !important;
+    box-shadow: 12px 0 42px rgba(31, 70, 130, 0.11) !important;
+    backdrop-filter: blur(18px) saturate(1.15);
+}
+
+body.light-theme .brand-block {
+    border-bottom-color: rgba(31, 70, 130, 0.12) !important;
+}
+
+body.light-theme .brand-title,
+body.light-theme .admin-name,
+body.light-theme .system-status,
+body.light-theme .page-hero h1,
+body.light-theme .repair-section-header h2,
+body.light-theme .requests-header h2,
+body.light-theme .repair-card-title h3,
+body.light-theme .summary-title h3,
+body.light-theme .damage-map-header h3,
+body.light-theme .card h3,
+body.light-theme .card h4,
+body.light-theme .card h5,
+body.light-theme .section-header h3,
+body.light-theme .home-welcome-card h2,
+body.light-theme .home-features-card h3,
+body.light-theme .request-details-header h3,
+body.light-theme .request-details-card h4,
+body.light-theme .ai-damage-hero h2,
+body.light-theme .ai-card-title h3 {
+    color: #102033 !important;
+}
+
+body.light-theme .brand-subtitle,
+body.light-theme .system-date,
+body.light-theme .admin-email,
+body.light-theme .version-text,
+body.light-theme .online-text,
+body.light-theme .text-muted,
+body.light-theme .stat-label,
+body.light-theme .section-header p,
+body.light-theme .repair-section-header p,
+body.light-theme .damage-map-header p,
+body.light-theme .summary-title p,
+body.light-theme .home-stat-label,
+body.light-theme .home-shortcut-card p,
+body.light-theme .home-welcome-card p,
+body.light-theme .ai-card-title p,
+body.light-theme .ai-damage-hero p,
+body.light-theme .ai-result-item span,
+body.light-theme .ai-price-box span,
+body.light-theme .selected-damage-info span,
+body.light-theme .damage-cart-header p {
+    color: #64748b !important;
+}
+
+body.light-theme .nav-item {
+    color: #243b5a !important;
+    background: rgba(255, 255, 255, 0.58) !important;
+    border-color: rgba(31, 70, 130, 0.13) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+}
+
+body.light-theme .nav-item:hover,
+body.light-theme .nav-item.active {
+    color: #0f172a !important;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.10)), rgba(255, 255, 255, 0.86) !important;
+    border-color: rgba(37, 99, 235, 0.34) !important;
+    box-shadow: 0 14px 32px rgba(37, 99, 235, 0.12) !important;
+}
+
+body.light-theme .nav-danger {
+    color: #b42345 !important;
+}
+
+body.light-theme .system-card,
+body.light-theme .admin-card,
+body.light-theme .topbar-search,
+body.light-theme .topbar-button,
+body.light-theme .top-action-button,
+body.light-theme .system-button,
+body.light-theme .theme-toggle-button,
+body.light-theme .hero-stat-card,
+body.light-theme .card,
+body.light-theme .home-welcome-card,
+body.light-theme .home-stat-card,
+body.light-theme .home-average-card,
+body.light-theme .home-chart-card,
+body.light-theme .home-shortcut-card,
+body.light-theme .home-features-card,
+body.light-theme .repair-workspace,
+body.light-theme .requests-section,
+body.light-theme .repair-main-card,
+body.light-theme .repair-summary-card,
+body.light-theme .damage-map-panel,
+body.light-theme .vehicle-map-card,
+body.light-theme .damage-cart-panel,
+body.light-theme .request-details-modal,
+body.light-theme .request-details-card,
+body.light-theme .ai-damage-hero,
+body.light-theme .ai-glass-card,
+body.light-theme .ai-warning-card {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(246, 249, 253, 0.62)) !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+    color: #102033 !important;
+    box-shadow: 0 18px 50px rgba(31, 70, 130, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+body.light-theme .page-hero {
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.58)),
+        url("/images/garage-bg.jpg") center / cover no-repeat !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+    box-shadow: 0 18px 50px rgba(31, 70, 130, 0.12) !important;
+}
+
+body.light-theme .page-hero-overlay {
+    background:
+        radial-gradient(circle at 70% 20%, rgba(37, 99, 235, 0.12), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(238, 244, 251, 0.38)) !important;
+}
+
+body.light-theme .page-hero p {
+    color: #475569 !important;
+}
+
+body.light-theme .content-surface {
+    color: #102033 !important;
+}
+
+body.light-theme .topbar-search input,
+body.light-theme .form-control,
+body.light-theme .form-select {
+    background: rgba(255, 255, 255, 0.90) !important;
+    color: #102033 !important;
+    border-color: rgba(31, 70, 130, 0.18) !important;
+}
+
+body.light-theme .topbar-search input::placeholder,
+body.light-theme .form-control::placeholder {
+    color: #7b8ca5 !important;
+}
+
+body.light-theme .form-select option {
+    background: #ffffff !important;
+    color: #102033 !important;
+}
+
+body.light-theme .form-label {
+    color: #243b5a !important;
+}
+
+body.light-theme .btn-outline-primary,
+body.light-theme .btn-outline-secondary,
+body.light-theme .btn-outline-dark {
+    color: #1f3a5f !important;
+    background: rgba(255, 255, 255, 0.62) !important;
+    border-color: rgba(31, 70, 130, 0.20) !important;
+}
+
+body.light-theme .btn-outline-primary:hover,
+body.light-theme .btn-outline-secondary:hover,
+body.light-theme .btn-outline-dark:hover {
+    color: #0f172a !important;
+    background: rgba(37, 99, 235, 0.10) !important;
+    border-color: rgba(37, 99, 235, 0.38) !important;
+}
+
+body.light-theme .new-order-button,
+body.light-theme .new-request-button,
+body.light-theme .btn-primary {
+    color: #ffffff !important;
+}
+
+body.light-theme .table-responsive-mobile,
+body.light-theme .table {
+    border-color: rgba(31, 70, 130, 0.14) !important;
+}
+
+body.light-theme .table {
+    --bs-table-color: #102033;
+    --bs-table-bg: rgba(255,255,255,0.64);
+    --bs-table-striped-bg: rgba(37, 99, 235, 0.035);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.075);
+    color: #102033 !important;
+}
+
+body.light-theme .table thead th {
+    background: rgba(232, 240, 250, 0.92) !important;
+    color: #102033 !important;
+    border-bottom-color: rgba(31, 70, 130, 0.14) !important;
+}
+
+body.light-theme .table tbody td,
+body.light-theme .table td,
+body.light-theme .table th {
+    color: #102033 !important;
+    border-color: rgba(31, 70, 130, 0.12) !important;
+}
+
+body.light-theme .summary-breakdown div,
+body.light-theme .summary-empty,
+body.light-theme .summary-hint,
+body.light-theme .damage-cart-item,
+body.light-theme .damage-part-item,
+body.light-theme .selected-damage-info,
+body.light-theme .request-info-item,
+body.light-theme .client-status-message,
+body.light-theme .status-step,
+body.light-theme .ai-result-item,
+body.light-theme .ai-comment-box,
+body.light-theme .ai-json-box,
+body.light-theme .ai-upload-zone,
+body.light-theme .ai-damage-row,
+body.light-theme .features-list div,
+body.light-theme .chart-shell {
+    background: rgba(255, 255, 255, 0.62) !important;
+    border-color: rgba(31, 70, 130, 0.13) !important;
+    color: #102033 !important;
+}
+
+body.light-theme .damage-part-item:hover,
+body.light-theme .damage-part-item.active {
+    background: rgba(37, 99, 235, 0.12) !important;
+    border-color: rgba(37, 99, 235, 0.32) !important;
+    color: #102033 !important;
+}
+
+body.light-theme .real-blueprint-v2,
+body.light-theme .vehicle-blueprint {
+    background:
+        radial-gradient(circle at center, rgba(37, 99, 235, 0.10), transparent 45%),
+        linear-gradient(rgba(31, 70, 130, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 70, 130, 0.045) 1px, transparent 1px),
+        rgba(255, 255, 255, 0.58) !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+}
+
+body.light-theme .blueprint-body-underlay {
+    opacity: 0.40 !important;
+    filter: drop-shadow(0 0 22px rgba(37, 99, 235, 0.18)) saturate(1.05) contrast(1.02) !important;
+}
+
+body.light-theme .summary-price,
+body.light-theme .damage-cart-price,
+body.light-theme .ai-damage-cost,
+body.light-theme .ai-price-box strong,
+body.light-theme .summary-total-row strong {
+    color: #118a52 !important;
+}
+
+body.light-theme .summary-error,
+body.light-theme .ai-error {
+    color: #9f1239 !important;
+    background: rgba(255, 77, 109, 0.10) !important;
+    border-color: rgba(190, 18, 60, 0.20) !important;
+}
+
+body.light-theme .summary-success {
+    color: #065f46 !important;
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(5, 150, 105, 0.22) !important;
+}
+
+body.light-theme .alert-info,
+body.light-theme .alert-secondary {
+    color: #1e3a5f !important;
+    background: rgba(37, 99, 235, 0.08) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+}
+
+body.light-theme .modal-kicker,
+body.light-theme .section-kicker {
+    color: #2563eb !important;
+}
+
+body.light-theme .system-modal-backdrop,
+body.light-theme .request-details-backdrop,
+body.light-theme .photo-viewer-backdrop {
+    background: rgba(229, 237, 247, 0.72) !important;
+}
+
+body.light-theme .notifications-dropdown,
+body.light-theme .system-modal,
+body.light-theme .photo-viewer-modal {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-color: rgba(31, 70, 130, 0.16) !important;
+    color: #102033 !important;
+}
+
+body.light-theme .notification-item {
+    background: rgba(255, 255, 255, 0.70) !important;
+    color: #102033 !important;
+    border-color: rgba(31, 70, 130, 0.12) !important;
+}
+
+body.light-theme .notification-item small,
+body.light-theme .notification-empty,
+body.light-theme .notifications-header span {
+    color: #64748b !important;
+}
+
+body.light-theme .app-icon,
+body.light-theme .section-svg-icon,
+body.light-theme .summary-svg-icon,
+body.light-theme .ai-card-icon {
+    color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.10) !important;
+    border-color: rgba(37, 99, 235, 0.18) !important;
+}
+
+body.light-theme .theme-toggle-button {
+    min-width: 128px;
+}
+
+body.light-theme .theme-toggle-button .theme-toggle-label {
+    color: #102033 !important;
+}
+
+body.light-theme input[type="file"] {
+    color: #334155 !important;
+}
+
+body.light-theme ::-webkit-scrollbar-track {
+    background: rgba(31, 70, 130, 0.06);
+}
+
+body.light-theme ::-webkit-scrollbar-thumb {
+    background: rgba(37, 99, 235, 0.24);
+}
+
+body.light-theme ::selection {
+    background: rgba(37, 99, 235, 0.22);
+}
+/* =========================================================
+   LIGHT THEME BACKGROUND FIX FOR MAINLAYOUT
+   Фон: wwwroot/images/autoservice-light-bg.png
+   Вставить в самый конец  в MainLayout.razor
+   ========================================================= */
+
+html.light-theme,
+body.light-theme {
+    min-height: 100%;
+    background:
+        linear-gradient(180deg, rgba(239, 245, 252, 0.22), rgba(226, 232, 240, 0.38)),
+        radial-gradient(circle at 72% 14%, rgba(37, 99, 235, 0.08), transparent 32%),
+        radial-gradient(circle at 22% 82%, rgba(124, 58, 237, 0.07), transparent 34%),
+        url('/images/autoservice-light-bg.png') center center / cover no-repeat fixed !important;
+    background-color: #e8eef6 !important;
+    color: #102033 !important;
+}
+
+/* Убираем сплошную подложку, которая скрывала фон */
+body.light-theme .app-shell,
+body.light-theme .app-main,
+body.light-theme .content-surface,
+body.light-theme .page,
+body.light-theme main,
+body.light-theme .content,
+body.light-theme article {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Сайдбар делаем стеклянным */
+body.light-theme .app-sidebar {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(241, 245, 249, 0.34)) !important;
+    border-right: 1px solid rgba(31, 70, 130, 0.14) !important;
+    box-shadow: 16px 0 46px rgba(31, 70, 130, 0.13) !important;
+    backdrop-filter: blur(22px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.14) !important;
+}
+
+/* Верхний баннер без старого garage-bg.jpg */
+body.light-theme .page-hero {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.24)) !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+    box-shadow:
+        0 20px 52px rgba(31, 70, 130, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+    backdrop-filter: blur(18px) saturate(1.16) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
+}
+
+/* Карточки и панели glass */
+body.light-theme .system-card,
+body.light-theme .admin-card,
+body.light-theme .topbar-search,
+body.light-theme .topbar-button,
+body.light-theme .top-action-button,
+body.light-theme .system-button,
+body.light-theme .theme-toggle-button,
+body.light-theme .hero-stat-card,
+body.light-theme .card,
+body.light-theme .card-body,
+body.light-theme .home-welcome-card,
+body.light-theme .home-stat-card,
+body.light-theme .home-average-card,
+body.light-theme .home-chart-card,
+body.light-theme .home-shortcut-card,
+body.light-theme .home-features-card,
+body.light-theme .repair-workspace,
+body.light-theme .requests-section,
+body.light-theme .repair-main-card,
+body.light-theme .repair-summary-card,
+body.light-theme .damage-map-panel,
+body.light-theme .vehicle-map-card,
+body.light-theme .damage-cart-panel,
+body.light-theme .request-details-modal,
+body.light-theme .request-details-card,
+body.light-theme .ai-damage-hero,
+body.light-theme .ai-glass-card,
+body.light-theme .ai-warning-card {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.22)) !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+    color: #102033 !important;
+    box-shadow:
+        0 18px 48px rgba(31, 70, 130, 0.11),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+    backdrop-filter: blur(18px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.14) !important;
+}
+
+/* Маленькие карточки чуть прозрачнее */
+body.light-theme .hero-stat-card,
+body.light-theme .home-stat-card,
+body.light-theme .home-shortcut-card,
+body.light-theme .dashboard-card,
+body.light-theme .ai-result-item,
+body.light-theme .request-info-item {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.16)) !important;
+}
+
+/* Текст */
+body.light-theme .brand-title,
+body.light-theme .admin-name,
+body.light-theme .system-status,
+body.light-theme .page-hero h1,
+body.light-theme .repair-section-header h2,
+body.light-theme .requests-header h2,
+body.light-theme .repair-card-title h3,
+body.light-theme .summary-title h3,
+body.light-theme .damage-map-header h3,
+body.light-theme .card h3,
+body.light-theme .card h4,
+body.light-theme .card h5,
+body.light-theme .section-header h3,
+body.light-theme .home-welcome-card h2,
+body.light-theme .home-features-card h3,
+body.light-theme .request-details-header h3,
+body.light-theme .request-details-card h4,
+body.light-theme .ai-damage-hero h2,
+body.light-theme .ai-card-title h3,
+body.light-theme .stat-value {
+    color: #102033 !important;
+    text-shadow: none !important;
+}
+
+body.light-theme .brand-subtitle,
+body.light-theme .system-date,
+body.light-theme .admin-email,
+body.light-theme .version-text,
+body.light-theme .online-text,
+body.light-theme .text-muted,
+body.light-theme .stat-label,
+body.light-theme .section-header p,
+body.light-theme .repair-section-header p,
+body.light-theme .damage-map-header p,
+body.light-theme .summary-title p,
+body.light-theme .home-stat-label,
+body.light-theme .home-shortcut-card p,
+body.light-theme .home-welcome-card p,
+body.light-theme .ai-card-title p,
+body.light-theme .ai-damage-hero p,
+body.light-theme .page-hero p {
+    color: #64748b !important;
+    text-shadow: none !important;
+}
+
+/* Навигация */
+body.light-theme .nav-item {
+    color: #243b5a !important;
+    background: rgba(255, 255, 255, 0.42) !important;
+    border-color: rgba(31, 70, 130, 0.13) !important;
+    box-shadow:
+        0 10px 22px rgba(31, 70, 130, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+body.light-theme .nav-item:hover,
+body.light-theme .nav-item.active {
+    color: #0f172a !important;
+    background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(124, 58, 237, 0.10)),
+        rgba(255, 255, 255, 0.54) !important;
+    border-color: rgba(37, 99, 235, 0.34) !important;
+    box-shadow: 0 14px 32px rgba(37, 99, 235, 0.13) !important;
+}
+
+/* Поля */
+body.light-theme .topbar-search input,
+body.light-theme .form-control,
+body.light-theme .form-select,
+body.light-theme .login-input,
+body.light-theme textarea {
+    background: rgba(255, 255, 255, 0.58) !important;
+    color: #102033 !important;
+    border-color: rgba(31, 70, 130, 0.18) !important;
+    backdrop-filter: blur(12px) saturate(1.10) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(1.10) !important;
+}
+
+body.light-theme .topbar-search input::placeholder,
+body.light-theme .form-control::placeholder,
+body.light-theme textarea::placeholder {
+    color: #7b8ca5 !important;
+}
+
+/* Кнопки */
+body.light-theme .new-order-button,
+body.light-theme .new-request-button,
+body.light-theme .btn-primary {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    border-color: rgba(37, 99, 235, 0.34) !important;
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22) !important;
+}
+
+body.light-theme .btn-outline-primary,
+body.light-theme .btn-outline-secondary,
+body.light-theme .btn-outline-dark {
+    color: #1f3a5f !important;
+    background: rgba(255, 255, 255, 0.42) !important;
+    border-color: rgba(31, 70, 130, 0.20) !important;
+}
+
+/* График оставляем тёмным, чтобы он не стал бледным */
+body.light-theme .chart-shell {
+    background: rgba(7, 19, 38, 0.90) !important;
+    border-color: rgba(31, 70, 130, 0.14) !important;
+}
+
+body.light-theme .chart-shell canvas,
+body.light-theme #statusChart {
+    background: transparent !important;
+}
+body.light-theme .home-chart-card {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.22)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.14) !important;
+    box-shadow:
+        0 18px 48px rgba(31, 70, 130, 0.11),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+    backdrop-filter: blur(18px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.14) !important;
+}
+
+body.light-theme .chart-shell {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.12)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.13) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.56),
+        0 14px 34px rgba(31, 70, 130, 0.08) !important;
+    backdrop-filter: blur(16px) saturate(1.12) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.12) !important;
+}
+
+body.light-theme .chart-shell canvas,
+body.light-theme #statusChart {
+    background: transparent !important;
+}
+/* =========================================================
+   LIGHT THEME FINAL UI CONTRAST FIX
+   AI placeholder / step pill / topbar buttons
+   ========================================================= */
+
+/* AI result empty placeholder */
+html body.light-theme .ai-empty-result,
+html body.light-theme .ai-result-placeholder,
+html body.light-theme .ai-result-empty,
+html body.light-theme .result-placeholder,
+html body.light-theme .ai-placeholder,
+html body.light-theme .ai-warning-card,
+html body.light-theme .ai-glass-card .empty-state,
+html body.light-theme .ai-glass-card .placeholder-state {
+    color: #475569 !important;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.13) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.62),
+        0 14px 30px rgba(31, 70, 130, 0.08) !important;
+    backdrop-filter: blur(16px) saturate(1.12) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.12) !important;
+}
+
+/* Если placeholder — это просто div внутри карточки результата */
+html body.light-theme .ai-result-card > div:only-child,
+html body.light-theme .ai-result-card .ai-empty-result {
+    color: #64748b !important;
+    text-shadow: none !important;
+}
+
+/* AI result card itself */
+html body.light-theme .ai-result-card,
+html body.light-theme .ai-result-panel {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.20)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.14) !important;
+    color: #102033 !important;
+    box-shadow:
+        0 20px 54px rgba(31, 70, 130, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+    backdrop-filter: blur(20px) saturate(1.16) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.16) !important;
+}
+
+/* Step pill: "Автомобиль и повреждения" */
+html body.light-theme .repair-step-pill {
+    color: #1e3a8a !important;
+    background:
+        linear-gradient(135deg, rgba(219, 234, 254, 0.72), rgba(255, 255, 255, 0.28)) !important;
+    border: 1px solid rgba(37, 99, 235, 0.22) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.68),
+        0 12px 26px rgba(37, 99, 235, 0.10) !important;
+    backdrop-filter: blur(14px) saturate(1.12) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.12) !important;
+}
+
+html body.light-theme .repair-step-pill span {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.20) !important;
+}
+
+/* Topbar buttons */
+html body.light-theme .theme-toggle-button,
+html body.light-theme .top-action-button,
+html body.light-theme .notification-button,
+html body.light-theme .system-button {
+    color: #102033 !important;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.18)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.16) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.68),
+        0 12px 28px rgba(31, 70, 130, 0.09) !important;
+    backdrop-filter: blur(16px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.14) !important;
+}
+
+html body.light-theme .theme-toggle-button:hover,
+html body.light-theme .top-action-button:hover,
+html body.light-theme .notification-button:hover,
+html body.light-theme .system-button:hover {
+    color: #0f172a !important;
+    background:
+        linear-gradient(135deg, rgba(219, 234, 254, 0.66), rgba(255, 255, 255, 0.28)) !important;
+    border-color: rgba(37, 99, 235, 0.32) !important;
+    box-shadow:
+        0 16px 32px rgba(37, 99, 235, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}
+
+html body.light-theme .theme-toggle-label,
+html body.light-theme .system-button span,
+html body.light-theme .top-action-button span {
+    color: #102033 !important;
+}
+
+html body.light-theme .theme-toggle-icon,
+html body.light-theme .top-action-button .app-icon,
+html body.light-theme .system-button .app-icon {
+    color: #2563eb !important;
+}
+
+/* Notification badge */
+html body.light-theme .notification-count,
+html body.light-theme .notification-badge {
+    color: #ffffff !important;
+    background: #f43f5e !important;
+    border: 2px solid rgba(255, 255, 255, 0.88) !important;
+    box-shadow: 0 8px 18px rgba(244, 63, 94, 0.25) !important;
+}
+
+/* Icon boxes in light cards */
+html body.light-theme .ai-card-icon,
+html body.light-theme .summary-svg-icon,
+html body.light-theme .section-svg-icon,
+html body.light-theme .app-icon-box {
+    color: #2563eb !important;
+    background:
+        linear-gradient(135deg, rgba(219, 234, 254, 0.76), rgba(255, 255, 255, 0.28)) !important;
+    border: 1px solid rgba(37, 99, 235, 0.20) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.66),
+        0 10px 22px rgba(37, 99, 235, 0.10) !important;
+}
+/* =========================================================
+   NAVMENU GLASS HARD OVERRIDE
+   Финальный блок для MainLayout.razor.
+   Важно: должен стоять последним внутри style-блока.
+   ========================================================= */
+
+/* Убираем сплошной слой под сайдбаром, иначе стекло почти не видно */
+html body.light-theme .app-shell {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Сайдбар: тёмная тема */
+html body.dark-theme .app-shell > aside.app-sidebar,
+html body:not(.light-theme) .app-shell > aside.app-sidebar {
+    background:
+        linear-gradient(180deg, rgba(6, 18, 38, 0.56), rgba(4, 12, 27, 0.70)) !important;
+    border-right: 1px solid rgba(180, 210, 255, 0.16) !important;
+    box-shadow:
+        18px 0 60px rgba(0, 0, 0, 0.28),
+        inset -1px 0 0 rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(22px) saturate(1.18) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+    position: sticky !important;
+    top: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Сайдбар: светлая тема */
+html body.light-theme .app-shell > aside.app-sidebar {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(241, 245, 249, 0.18)) !important;
+    border-right: 1px solid rgba(31, 70, 130, 0.13) !important;
+    box-shadow:
+        20px 0 58px rgba(31, 70, 130, 0.14),
+        inset -1px 0 0 rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(26px) saturate(1.22) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(1.22) !important;
+    position: sticky !important;
+    top: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Блик внутри сайдбара */
+html body .app-shell > aside.app-sidebar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(80, 160, 255, 0.18), transparent 34%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07), transparent 44%);
+    opacity: 0.95;
+}
+
+html body.light-theme .app-shell > aside.app-sidebar::before {
+    background:
+        radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.16), transparent 34%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.42), transparent 48%);
+    opacity: 0.90;
+}
+
+html body .app-shell > aside.app-sidebar > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Бренд */
+html body .app-sidebar .brand-block {
+    border-bottom: 1px solid rgba(180, 210, 255, 0.13) !important;
+}
+
+html body.light-theme .app-sidebar .brand-block {
+    border-bottom-color: rgba(31, 70, 130, 0.12) !important;
+}
+
+html body.light-theme .app-sidebar .brand-title {
+    color: #102033 !important;
+}
+
+html body.light-theme .app-sidebar .brand-subtitle {
+    color: #64748b !important;
+}
+
+/* Пункты меню — тёмная тема */
+html body.dark-theme .app-sidebar .nav-item,
+html body:not(.light-theme) .app-sidebar .nav-item {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.070), rgba(255, 255, 255, 0.020)),
+        rgba(9, 23, 48, 0.30) !important;
+    border: 1px solid rgba(180, 210, 255, 0.15) !important;
+    color: #c8d7f2 !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 9px 24px rgba(0, 0, 0, 0.13) !important;
+    backdrop-filter: blur(14px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.14) !important;
+}
+
+/* Пункты меню — светлая тема */
+html body.light-theme .app-sidebar .nav-item {
+    color: #243b5a !important;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.12)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.12) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.62),
+        0 10px 24px rgba(31, 70, 130, 0.06) !important;
+    backdrop-filter: blur(16px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.14) !important;
+}
+
+/* Hover/active — тёмная тема */
+html body.dark-theme .app-sidebar .nav-item:hover,
+html body.dark-theme .app-sidebar .nav-item.active,
+html body:not(.light-theme) .app-sidebar .nav-item:hover,
+html body:not(.light-theme) .app-sidebar .nav-item.active {
+    transform: translateX(3px) !important;
+    color: #ffffff !important;
+    background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.38), rgba(124, 58, 237, 0.28)),
+        rgba(12, 31, 60, 0.42) !important;
+    border-color: rgba(96, 165, 250, 0.62) !important;
+    box-shadow:
+        0 16px 34px rgba(37, 99, 235, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.11) !important;
+}
+
+/* Hover/active — светлая тема */
+html body.light-theme .app-sidebar .nav-item:hover,
+html body.light-theme .app-sidebar .nav-item.active {
+    transform: translateX(3px) !important;
+    color: #0f172a !important;
+    background:
+        linear-gradient(135deg, rgba(191, 219, 254, 0.74), rgba(255, 255, 255, 0.24)) !important;
+    border-color: rgba(37, 99, 235, 0.38) !important;
+    box-shadow:
+        0 16px 34px rgba(37, 99, 235, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.74) !important;
+}
+
+/* Иконки */
+html body .app-sidebar .nav-icon {
+    color: #93c5fd !important;
+}
+
+html body.light-theme .app-sidebar .nav-icon {
+    color: #2563eb !important;
+}
+
+html body .app-sidebar .nav-item:hover .nav-icon,
+html body .app-sidebar .nav-item.active .nav-icon {
+    color: #ffffff !important;
+}
+
+html body.light-theme .app-sidebar .nav-item:hover .nav-icon,
+html body.light-theme .app-sidebar .nav-item.active .nav-icon {
+    color: #1d4ed8 !important;
+}
+
+/* BETA */
+html body .app-sidebar .nav-beta {
+    color: #ede9fe !important;
+    background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.30), rgba(37, 99, 235, 0.18)) !important;
+    border: 1px solid rgba(196, 181, 253, 0.36) !important;
+}
+
+html body.light-theme .app-sidebar .nav-beta {
+    color: #5b21b6 !important;
+    background:
+        linear-gradient(135deg, rgba(237, 233, 254, 0.86), rgba(255, 255, 255, 0.30)) !important;
+    border-color: rgba(124, 58, 237, 0.26) !important;
+}
+
+/* Нижние карточки сайдбара */
+html body .app-sidebar .system-card,
+html body .app-sidebar .admin-card {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.070), rgba(255, 255, 255, 0.020)),
+        rgba(9, 23, 48, 0.32) !important;
+    border: 1px solid rgba(180, 210, 255, 0.15) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 10px 28px rgba(0, 0, 0, 0.14) !important;
+    backdrop-filter: blur(16px) saturate(1.14) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.14) !important;
+}
+
+html body.light-theme .app-sidebar .system-card,
+html body.light-theme .app-sidebar .admin-card {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14)) !important;
+    border: 1px solid rgba(31, 70, 130, 0.12) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.64),
+        0 12px 28px rgba(31, 70, 130, 0.08) !important;
+}
+
+html body.light-theme .app-sidebar .system-status,
+html body.light-theme .app-sidebar .admin-name {
+    color: #102033 !important;
+}
+
+html body.light-theme .app-sidebar .system-date,
+html body.light-theme .app-sidebar .admin-email,
+html body.light-theme .app-sidebar .version-text,
+html body.light-theme .app-sidebar .online-text {
+    color: #64748b !important;
+}
+
 </style>
 
 <div class="app-shell">
@@ -1973,6 +2975,16 @@
                 <span>Оценка ремонта ДТП</span>
             </NavLink>
 
+            <NavLink href="/request-status" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                </span>
+                <span>Статус заявки</span>
+            </NavLink>
+
             @if (UserState.CanManagePrices)
             {
                 <NavLink href="/prices" class="nav-item">
@@ -2015,7 +3027,6 @@
                 <span class="nav-beta">BETA</span>
             </NavLink>
         </nav>
-
         <div class="sidebar-footer">
             <div class="system-card">
                 <div class="system-status">
@@ -2024,7 +3035,7 @@
                 </div>
 
                 <div class="system-date">
-                    @DateTime.Now.ToString("dd.MM.yyyy, HH:mm")
+                    @currentTime.ToString("dd.MM.yyyy, HH:mm:ss")
                 </div>
             </div>
 
@@ -2046,6 +3057,38 @@
             <div class="topbar-spacer"></div>
 
             <div class="topbar-actions">
+                <button type="button"
+                        class="theme-toggle-button"
+                        title="Переключить тему"
+                        @onclick="ToggleThemeAsync">
+                    <span class="theme-toggle-icon">
+                        @if (isLightTheme)
+                        {
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 1 0 9.8 9.8Z" />
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="4" />
+                                <path d="M12 2v2" />
+                                <path d="M12 20v2" />
+                                <path d="M4.93 4.93l1.41 1.41" />
+                                <path d="M17.66 17.66l1.41 1.41" />
+                                <path d="M2 12h2" />
+                                <path d="M20 12h2" />
+                                <path d="M4.93 19.07l1.41-1.41" />
+                                <path d="M17.66 6.34l1.41-1.41" />
+                            </svg>
+                        }
+                    </span>
+
+                    <span class="theme-toggle-label">
+                        @(isLightTheme ? "Тёмная" : "Светлая")
+                    </span>
+                </button>
+
                 @if (UserState.CanSeeNotifications)
                 {
                     <div class="notification-wrapper">
@@ -2264,6 +3307,9 @@
 }
 
 @code {
+    private const string ThemeStorageKey = "autoestimate-theme";
+    private bool isLightTheme;
+
     private DashboardStats stats = new();
 
     private bool showSystemModal = false;
@@ -2275,10 +3321,57 @@
             ? stats.NewRequestsCount
             : 0;
 
+
+    private DateTime currentTime = DateTime.Now;
+private PeriodicTimer? clockTimer;
+private CancellationTokenSource clockCts = new();
+
+protected override void OnInitialized()
+{
+    _ = RunClockAsync();
+}
+
+private async Task RunClockAsync()
+{
+    clockTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+    try
+    {
+        while (await clockTimer.WaitForNextTickAsync(clockCts.Token))
+        {
+            currentTime = DateTime.Now;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    catch (OperationCanceledException)
+    {
+        // Нормальное завершение при выходе со страницы.
+    }
+}
+
+public void Dispose()
+{
+    clockCts.Cancel();
+    clockTimer?.Dispose();
+    clockCts.Dispose();
+}
     protected override async Task OnInitializedAsync()
     {
         stats = await StatsService.GetStatsAsync();
         StatsNotifier.OnChange += RefreshStatsAsync;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        var savedTheme = await JS.InvokeAsync<string?>("localStorage.getItem", ThemeStorageKey);
+
+        isLightTheme = savedTheme == "light";
+
+        await ApplyThemeClassAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task RefreshStatsAsync()
@@ -2287,9 +3380,29 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
+
+    private async Task ToggleThemeAsync()
     {
-        StatsNotifier.OnChange -= RefreshStatsAsync;
+        isLightTheme = !isLightTheme;
+
+        var theme = isLightTheme ? "light" : "dark";
+
+        await JS.InvokeVoidAsync("localStorage.setItem", ThemeStorageKey, theme);
+        await ApplyThemeClassAsync();
+    }
+
+    private async Task ApplyThemeClassAsync()
+    {
+        var addClass = isLightTheme ? "light-theme" : "dark-theme";
+        var removeClass = isLightTheme ? "dark-theme" : "light-theme";
+
+        var script =
+            $"document.body.classList.remove('{removeClass}');" +
+            $"document.body.classList.add('{addClass}');" +
+            $"document.documentElement.classList.remove('{removeClass}');" +
+            $"document.documentElement.classList.add('{addClass}');";
+
+        await JS.InvokeVoidAsync("eval", script);
     }
 
     private string CurrentUserName =>
@@ -2347,6 +3460,9 @@
 
     private void GoToNewRequest()
     {
+        showNotifications = false;
+        showSystemModal = false;
+
         Navigation.NavigateTo("/repair-requests");
     }
 

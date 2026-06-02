@@ -15,33 +15,45 @@ public class DashboardStatsService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var requests = await db.RepairRequests
+        var groupedByStatus = await db.RepairRequests
             .AsNoTracking()
+            .GroupBy(x => x.Status)
+            .Select(g => new
+            {
+                Status = string.IsNullOrWhiteSpace(g.Key) ? "" : g.Key.Trim(),
+                Count = g.Count()
+            })
+            .ToDictionaryAsync(x => x.Status, x => x.Count);
+
+        var calculatedCosts = await db.RepairRequests
+            .AsNoTracking()
+            .Where(x => x.CalculatedCost > 0)
+            .Select(x => x.CalculatedCost)
             .ToListAsync();
 
-        var totalRequests = requests.Count;
-
-        var completedRequests = requests
-            .Where(x => x.Status == "Завершена")
-            .ToList();
-
-        var paidOrCalculatedRequests = requests
-            .Where(x => x.CalculatedCost > 0)
-            .ToList();
+        var totalRequests = await db.RepairRequests
+            .AsNoTracking()
+            .CountAsync();
 
         return new DashboardStats
         {
-            InProgressCount = requests.Count(x => x.Status == "В обработке"),
-            NewRequestsCount = requests.Count(x => x.Status == "Новая"),
-
-            AverageCheck = paidOrCalculatedRequests.Count == 0
-                ? 0
-                : Math.Round(paidOrCalculatedRequests.Average(x => x.CalculatedCost), 0),
+            NewRequestsCount = GetStatusCount(groupedByStatus, "Новая"),
+            InProgressCount = GetStatusCount(groupedByStatus, "В обработке"),
+            EstimatedCount = GetStatusCount(groupedByStatus, "Оценена"),
+            CompletedCount = GetStatusCount(groupedByStatus, "Завершена"),
 
             TotalRequestsCount = totalRequests,
-            CompletedCount = completedRequests.Count,
 
-            TotalAmount = paidOrCalculatedRequests.Sum(x => x.CalculatedCost)
+            AverageCheck = calculatedCosts.Count == 0
+                ? 0
+                : Math.Round(calculatedCosts.Average(), 0),
+
+            TotalAmount = calculatedCosts.Sum()
         };
+    }
+
+    private static int GetStatusCount(Dictionary<string, int> statuses, string status)
+    {
+        return statuses.TryGetValue(status, out var count) ? count : 0;
     }
 }

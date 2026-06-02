@@ -8,9 +8,9 @@
 @using System.Text.Encodings.Web
 @using System.Text.Json
 
+@inject GeminiDamageAssessmentService AiDamageService
 @inject PendingAiDamageState PendingAiDamageState
 @inject NavigationManager Navigation
-@inject GeminiDamageAssessmentService GeminiDamageService
 
 <div class="ai-damage-page">
     <section class="ai-damage-hero">
@@ -18,13 +18,13 @@
             <span class="section-kicker">AI-подсказка</span>
             <h2>Оценка кузовного повреждения по фото</h2>
             <p>
-                Загрузите фото повреждения. Система отправит изображение в Gemini API,
+                Загрузите фото повреждения. Система отправит изображение в AI-сервис,
                 получит структурированную подсказку и покажет результат для ручной проверки.
             </p>
         </div>
 
         <div class="ai-mode-badge">
-            GEMINI
+            REAL AI
         </div>
     </section>
 
@@ -82,8 +82,8 @@
                 <button type="button"
                         class="btn btn-primary"
                         disabled="@isAnalyzing"
-                        @onclick="AnalyzePhotoGemini">
-                    @(isAnalyzing ? "AI анализирует..." : "Запустить Gemini-оценку")
+                        @onclick="AnalyzePhotoReal">
+                    @(isAnalyzing ? "AI анализирует..." : "Запустить AI-оценку")
                 </button>
 
                 <button type="button"
@@ -126,20 +126,20 @@
                 <div class="ai-loading">
                     <div class="ai-loader"></div>
                     <strong>Идёт анализ фото...</strong>
-                    <span>Фото отправлено в Gemini API. Обычно это занимает несколько секунд.</span>
+                    <span>Фото отправлено в AI-сервис. Обычно это занимает несколько секунд.</span>
                 </div>
             }
             else if (result is null)
             {
                 <div class="ai-empty-result">
-                    Загрузите фото и нажмите “Запустить Gemini-оценку”. После анализа результат можно будет перенести в новую заявку.
+                    Загрузите фото и нажмите “Запустить AI-оценку”.
                 </div>
             }
             else
             {
                 <div class="ai-confidence">
                     <div>
-                        <span>Уверенность @(isDemoResult ? "DEMO" : "Gemini")</span>
+                        <span>Уверенность @(isDemoResult ? "DEMO" : "AI")</span>
                         <strong>@((result.Confidence * 100).ToString("0"))%</strong>
                     </div>
 
@@ -157,95 +157,76 @@
 
                 <div class="ai-result-grid">
                     <div class="ai-result-item">
-                        <span>Основная зона</span>
+                        <span>Деталь</span>
                         <strong>@result.DetectedPart</strong>
                     </div>
 
                     <div class="ai-result-item">
-                        <span>Повреждений найдено</span>
-                        <strong>@result.Items.Count</strong>
-                    </div>
-
-                    <div class="ai-result-item">
-                        <span>Самое серьёзное</span>
-                        <strong>@result.DamageLevel</strong>
+                        <span>Повреждение</span>
+                        <strong>@result.DamageType</strong>
                     </div>
 
                     <div class="ai-result-item">
                         <span>Тип ремонта</span>
                         <strong>@result.RepairType</strong>
                     </div>
-                </div>
 
-                <div class="ai-damage-list">
-                    <div class="ai-damage-list-title">
-                        Видимые повреждённые зоны
+                    <div class="ai-result-item">
+                        <span>Степень</span>
+                        <strong>@result.DamageLevel</strong>
                     </div>
-
-                    @foreach (var damage in result.Items)
-                    {
-                        <div class="ai-damage-row">
-                            <div>
-                                <strong>@damage.DetectedPart</strong>
-                                <span>@damage.DamageType / @damage.RepairType / @damage.DamageLevel</span>
-
-                                @if (!string.IsNullOrWhiteSpace(damage.Comment))
-                                {
-                                    <small>@damage.Comment</small>
-                                }
-                            </div>
-
-                            <div class="ai-damage-cost">
-                                @damage.EstimatedCost.ToString("N0") ₽
-                            </div>
-                        </div>
-                    }
                 </div>
+
+                @if (result.Items is not null && result.Items.Count > 0)
+                {
+                    <div class="ai-damage-zones">
+                        <h4>Видимые повреждённые зоны</h4>
+
+                        @foreach (var item in result.Items
+                            .Where(x => !string.IsNullOrWhiteSpace(x.DetectedPart))
+                            .Where(x => !string.Equals(x.DetectedPart, "Не определено", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <div class="ai-damage-zone-card">
+                                <div>
+                                    <strong>@item.DetectedPart</strong>
+                                    <span>@item.DamageType / @item.RepairType / @item.DamageLevel</span>
+                                    <p>@item.Comment</p>
+                                </div>
+
+                                <b>@item.EstimatedCost.ToString("N0") ₽</b>
+                            </div>
+                        }
+                    </div>
+                }
 
                 <div class="ai-price-box">
-                    <span>Предварительная сумма по найденным зонам</span>
+                    <span>Ориентировочная стоимость</span>
                     <strong>@result.EstimatedCost.ToString("N0") ₽</strong>
-                    <small>Это сумма локального расчёта по всем найденным AI-позициям. Финальный расчёт лучше брать из основного прайс-листа.</small>
+                    <small>Цена рассчитана локально по базовой логике. Финальный расчёт лучше брать из основного прайс-листа.</small>
                 </div>
+                
+                <button type="button"
+                        class="ai-apply-button"
+                        disabled="@(result is null || isAnalyzing)"
+                        @onclick="ApplyAiResultToNewRequest">
+                    <span class="ai-apply-icon">→</span>
+                    <span>
+                        <strong>Применить к новой заявке</strong>
+                        <small>Перенести найденные повреждения в корзину ремонта</small>
+                    </span>
+                </button>
 
-
-                @if (result.Items.Count > 0)
+                @if (!string.IsNullOrWhiteSpace(applyMessage))
                 {
-                    <div class="ai-apply-panel">
-                        <button type="button"
-                                class="ai-apply-button"
-                                @onclick="ApplyAiResultToRequest">
-                            <span class="ai-apply-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M5 12h14" />
-                                    <path d="M13 6l6 6-6 6" />
-                                </svg>
-                            </span>
-
-                            <span>
-                                <strong>Применить к новой заявке</strong>
-                                <small>Перенести найденные повреждения в корзину ремонта</small>
-                            </span>
-                        </button>
-
-                        <div class="ai-apply-note">
-                            После применения проверьте позиции, автомобиль и итоговый расчёт перед сохранением заявки.
-                        </div>
+                    <div class="ai-apply-message">
+                        @applyMessage
                     </div>
                 }
 
-                <div class="ai-comment-box">
-                    <strong>Общий комментарий AI</strong>
+                @* <div class="ai-comment-box">
+                    <strong>Комментарий AI</strong>
                     <p>@result.Comment</p>
-                </div>
-
-                @if (showTechnicalJson)
-                {
-                    <div class="ai-json-box">
-                        <strong>Структура результата</strong>
-                        <textarea readonly>@GetResultJson()</textarea>
-                    </div>
-                }
+                </div>              *@
             }
         </aside>
     </section>
@@ -389,19 +370,22 @@
 
     .ai-photo-preview {
         margin-top: 16px;
-        height: 340px;
+        height: 520px;
         border-radius: 20px;
         overflow: hidden;
         background: rgba(3, 12, 27, 0.72);
         border: 1px solid rgba(147, 197, 253, 0.16);
-        display: grid;
-        place-items: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
         .ai-photo-preview img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            background: #07111f;
+            border-radius: 16px;
         }
 
     .ai-error {
@@ -521,55 +505,6 @@
             font-weight: 900;
         }
 
-    .ai-damage-list {
-        display: grid;
-        gap: 10px;
-        margin-top: 12px;
-    }
-
-    .ai-damage-list-title {
-        color: #ffffff;
-        font-weight: 900;
-        font-size: 15px;
-    }
-
-    .ai-damage-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: center;
-        padding: 12px;
-        border-radius: 15px;
-        background: rgba(3, 12, 27, 0.42);
-        border: 1px solid rgba(147, 197, 253, 0.12);
-    }
-
-        .ai-damage-row strong {
-            display: block;
-            color: #ffffff;
-            font-weight: 900;
-        }
-
-        .ai-damage-row span {
-            display: block;
-            margin-top: 3px;
-            color: #b8c7e6;
-            font-size: 13px;
-        }
-
-        .ai-damage-row small {
-            display: block;
-            margin-top: 6px;
-            color: #8fa6cd;
-            line-height: 1.3;
-        }
-
-    .ai-damage-cost {
-        color: #32d583;
-        font-weight: 950;
-        white-space: nowrap;
-    }
-
     .ai-price-box {
         margin-top: 12px;
         padding: 16px;
@@ -593,48 +528,31 @@
             line-height: 1.35;
         }
 
-
-    .ai-apply-panel {
-        display: grid;
-        gap: 10px;
-        margin-top: 14px;
-    }
-
     .ai-apply-button {
         width: 100%;
-        min-height: 62px;
+        margin-top: 12px;
+        padding: 14px 16px;
+        border: 1px solid rgba(147, 197, 253, 0.22);
+        border-radius: 18px;
         display: flex;
         align-items: center;
         gap: 13px;
-        padding: 13px 15px;
-        border-radius: 18px;
-        border: 1px solid rgba(50, 213, 131, 0.42);
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.72), rgba(124, 58, 237, 0.62)), rgba(50, 213, 131, 0.12);
         color: #ffffff;
+        background: linear-gradient(135deg, #2563eb, #6d28d9);
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.22);
+        cursor: pointer;
         text-align: left;
-        box-shadow: 0 16px 38px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-        transition: 0.16s ease;
+        transition: transform 0.15s ease, filter 0.15s ease;
     }
 
-        .ai-apply-button:hover {
+        .ai-apply-button:hover:not(:disabled) {
             transform: translateY(-1px);
-            border-color: rgba(50, 213, 131, 0.70);
-            box-shadow: 0 18px 44px rgba(37, 99, 235, 0.30), 0 0 0 3px rgba(50, 213, 131, 0.10);
+            filter: brightness(1.05);
         }
 
-        .ai-apply-button strong {
-            display: block;
-            font-size: 15px;
-            font-weight: 950;
-            line-height: 1.2;
-        }
-
-        .ai-apply-button small {
-            display: block;
-            margin-top: 3px;
-            color: #dbeafe;
-            font-size: 12px;
-            line-height: 1.25;
+        .ai-apply-button:disabled {
+            opacity: 0.62;
+            cursor: not-allowed;
         }
 
     .ai-apply-icon {
@@ -644,27 +562,37 @@
         display: grid;
         place-items: center;
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.13);
+        font-size: 24px;
+        font-weight: 900;
+        background: rgba(255, 255, 255, 0.14);
         border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
-        .ai-apply-icon svg {
-            width: 21px;
-            height: 21px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2.3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
+    .ai-apply-button strong,
+    .ai-apply-button small {
+        display: block;
+    }
 
-    .ai-apply-note {
+    .ai-apply-button strong {
+        font-size: 16px;
+        font-weight: 950;
+        line-height: 1.15;
+    }
+
+    .ai-apply-button small {
+        margin-top: 2px;
+        color: #dbeafe;
+        line-height: 1.25;
+    }
+
+    .ai-apply-message {
+        margin-top: 10px;
         padding: 11px 12px;
         border-radius: 14px;
-        background: rgba(251, 191, 36, 0.09);
-        border: 1px solid rgba(251, 191, 36, 0.18);
-        color: #fef3c7;
-        font-size: 13px;
+        color: #d9f99d;
+        background: rgba(132, 204, 22, 0.10);
+        border: 1px solid rgba(132, 204, 22, 0.24);
+        font-weight: 800;
         line-height: 1.35;
     }
 
@@ -732,9 +660,76 @@
         }
 
         .ai-photo-preview {
-            height: 260px;
+            height: 320px;
         }
     }
+
+    .ai-apply-button {
+        margin-top: 12px;
+        min-height: 58px;
+        border-radius: 18px;
+        font-weight: 900;
+    }
+
+    .ai-apply-hint {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        color: #fef3c7;
+        background: rgba(251, 191, 36, 0.10);
+        border: 1px solid rgba(251, 191, 36, 0.22);
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .ai-damage-zones {
+        margin-top: 14px;
+    }
+
+        .ai-damage-zones h4 {
+            margin: 0 0 10px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+    .ai-damage-zone-card {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px;
+        margin-top: 10px;
+        border-radius: 16px;
+        background: rgba(3, 12, 27, 0.42);
+        border: 1px solid rgba(147, 197, 253, 0.12);
+    }
+
+        .ai-damage-zone-card strong {
+            display: block;
+            color: #ffffff;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .ai-damage-zone-card span {
+            display: block;
+            color: #c7d7f3;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .ai-damage-zone-card p {
+            margin: 0;
+            color: #9fb3d9;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .ai-damage-zone-card b {
+            color: #32d583;
+            font-weight: 950;
+            white-space: nowrap;
+        }
 </style>
 
 @code {
@@ -744,13 +739,53 @@
     private string selectedFileSizeText = "";
     private string photoPreviewDataUrl = "";
     private string errorMessage = "";
+    private string applyMessage = "";
     private bool isAnalyzing;
     private bool isDemoResult;
     private AiDamageResult? result;
-    private bool showTechnicalJson;
 
     private const long MaxFileSize = 8 * 1024 * 1024;
 
+    private void ApplyResultToNewRequest()
+    {
+        errorMessage = "";
+
+        if (result is null)
+        {
+            errorMessage = "Сначала выполните AI-оценку.";
+            return;
+        }
+
+        var items = result.Items?
+            .Where(x => !string.IsNullOrWhiteSpace(x.DetectedPart))
+            .Where(x => !string.Equals(x.DetectedPart, "Не определено", StringComparison.OrdinalIgnoreCase))
+            .ToList() ?? new List<AiDamageItem>();
+
+        if (items.Count == 0 && !string.IsNullOrWhiteSpace(result.DetectedPart))
+        {
+            items.Add(new AiDamageItem
+            {
+                DetectedPart = result.DetectedPart,
+                DamageType = result.DamageType,
+                RepairType = result.RepairType,
+                DamageLevel = result.DamageLevel,
+                Confidence = result.Confidence,
+                EstimatedCost = result.EstimatedCost,
+                NeedsHumanReview = result.NeedsHumanReview,
+                Comment = result.Comment
+            });
+        }
+
+        if (items.Count == 0)
+        {
+            errorMessage = "AI не нашёл повреждения, которые можно перенести в заявку.";
+            return;
+        }
+
+        PendingAiDamageState.SetItems(items);
+
+        Navigation.NavigateTo("/repair-requests");
+    }
     private async Task OnPhotoSelected(InputFileChangeEventArgs e)
     {
         ResetAnalysis(keepPhoto: false);
@@ -793,9 +828,10 @@
         }
     }
 
-    private async Task AnalyzePhotoGemini()
+    private async Task AnalyzePhotoReal()
     {
         errorMessage = "";
+        applyMessage = "";
         result = null;
         isDemoResult = false;
 
@@ -809,7 +845,7 @@
 
         try
         {
-            result = await GeminiDamageService.AnalyzeAsync(selectedPhotoBytes, selectedPhotoContentType);
+            result = await AiDamageService.AnalyzeAsync(selectedPhotoBytes, selectedPhotoContentType);
         }
         catch (Exception ex)
         {
@@ -824,6 +860,7 @@
     private async Task AnalyzePhotoDemo()
     {
         errorMessage = "";
+        applyMessage = "";
         result = null;
         isDemoResult = true;
 
@@ -889,37 +926,23 @@
         if (confidence > 0.89)
             confidence = 0.89;
 
-        var demoItem = new AiDamageItem
+        var demoResult = new AiDamageResult
         {
             DetectedPart = detectedPart,
             DamageType = damageType,
             RepairType = repairType,
             DamageLevel = damageLevel,
             Confidence = confidence,
+            IsCarDamagePhoto = true,
             NeedsHumanReview = true,
             Comment = $"На фото предположительно обнаружено повреждение типа “{damageType}” на детали “{detectedPart}”. Это демонстрационный результат."
         };
 
-        demoItem.EstimatedCost = CalculateDemoCost(demoItem);
-
-        var demoResult = new AiDamageResult
-        {
-            DetectedPart = demoItem.DetectedPart,
-            DamageType = demoItem.DamageType,
-            RepairType = demoItem.RepairType,
-            DamageLevel = demoItem.DamageLevel,
-            Confidence = demoItem.Confidence,
-            EstimatedCost = demoItem.EstimatedCost,
-            IsCarDamagePhoto = true,
-            NeedsHumanReview = true,
-            Comment = "Демонстрационная AI-подсказка сформирована локально.",
-            Items = new List<AiDamageItem> { demoItem }
-        };
-
+        demoResult.EstimatedCost = CalculateDemoCost(demoResult);
         return demoResult;
     }
 
-    private static decimal CalculateDemoCost(AiDamageItem item)
+    private static decimal CalculateDemoCost(AiDamageResult item)
     {
         var basePrice = item.DetectedPart switch
         {
@@ -941,20 +964,57 @@
         return Math.Round(basePrice * levelMultiplier, 0);
     }
 
-
-    private void ApplyAiResultToRequest()
+    private void ApplyAiResultToNewRequest()
     {
         errorMessage = "";
+        applyMessage = "";
 
-        if (result is null || result.Items.Count == 0)
+        if (result is null)
         {
-            errorMessage = "Нет AI-результата для применения.";
+            errorMessage = "Сначала выполните AI-оценку.";
             return;
         }
 
-        PendingAiDamageState.SetItems(result.Items);
+        var items = result.Items?
+            .Where(x => !string.IsNullOrWhiteSpace(x.DetectedPart))
+            .Where(x => !string.Equals(x.DetectedPart, "Не определено", StringComparison.OrdinalIgnoreCase))
+            .Select(x => new AiDamageItem
+            {
+                DetectedPart = x.DetectedPart,
+                DamageType = x.DamageType,
+                RepairType = x.RepairType,
+                DamageLevel = x.DamageLevel,
+                Confidence = x.Confidence,
+                EstimatedCost = x.EstimatedCost,
+                NeedsHumanReview = x.NeedsHumanReview,
+                Comment = x.Comment
+            })
+            .ToList() ?? new List<AiDamageItem>();
 
-        Navigation.NavigateTo("/repair-requests?ai=1");
+        if (items.Count == 0 && !string.IsNullOrWhiteSpace(result.DetectedPart))
+        {
+            items.Add(new AiDamageItem
+            {
+                DetectedPart = result.DetectedPart,
+                DamageType = result.DamageType,
+                RepairType = result.RepairType,
+                DamageLevel = result.DamageLevel,
+                Confidence = result.Confidence,
+                EstimatedCost = result.EstimatedCost,
+                NeedsHumanReview = result.NeedsHumanReview,
+                Comment = result.Comment
+            });
+        }
+
+        if (items.Count == 0)
+        {
+            errorMessage = "AI не нашёл повреждения, которые можно перенести в заявку.";
+            return;
+        }
+
+        PendingAiDamageState.SetItems(items);
+
+        Navigation.NavigateTo("/repair-requests");
     }
 
     private string GetResultJson()
@@ -1001,6 +1061,7 @@
     private void ResetAnalysis(bool keepPhoto)
     {
         errorMessage = "";
+        applyMessage = "";
         isAnalyzing = false;
         isDemoResult = false;
         result = null;

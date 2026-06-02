@@ -1,0 +1,292 @@
+﻿@page "/request-status"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using MyBlazorSite.Data
+
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<style>
+    .status-page {
+        width: 100%;
+        display: grid;
+        gap: 22px;
+    }
+
+    .status-card,
+    .status-result-card {
+        border-radius: 24px;
+        padding: 24px;
+        background: rgba(24, 40, 68, 0.90);
+        border: 1px solid rgba(120, 160, 255, 0.14);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+    }
+
+        .status-card h2,
+        .status-result-card h2,
+        .status-result-card h3 {
+            color: #ffffff;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .status-card p,
+        .status-result-card p {
+            color: #9fb3d9;
+            margin: 8px 0 0;
+        }
+
+    .status-form-grid {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+        gap: 14px;
+        align-items: end;
+        margin-top: 22px;
+    }
+
+    .status-result-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .status-info-item {
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(7, 19, 38, 0.48);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+    }
+
+        .status-info-item span {
+            display: block;
+            color: #9fb3d9;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .status-info-item strong {
+            display: block;
+            color: #ffffff;
+            font-size: 16px;
+            overflow-wrap: anywhere;
+        }
+
+    .status-price {
+        color: #32d583 !important;
+        font-size: 22px !important;
+        font-weight: 950 !important;
+    }
+
+    .status-damage-box {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(7, 19, 38, 0.48);
+        border: 1px solid rgba(120, 160, 255, 0.12);
+        color: #d8e8ff;
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+
+    .status-alert-error,
+    .status-alert-hint {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 16px;
+    }
+
+    .status-alert-error {
+        color: #ffd1da;
+        background: rgba(255, 77, 109, 0.12);
+        border: 1px solid rgba(255, 77, 109, 0.28);
+    }
+
+    .status-alert-hint {
+        color: #d8e8ff;
+        background: rgba(13, 110, 253, 0.10);
+        border: 1px solid rgba(120, 160, 255, 0.16);
+    }
+
+    body.light-theme .status-card,
+    body.light-theme .status-result-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.50), rgba(255, 255, 255, 0.22)) !important;
+        border-color: rgba(31, 70, 130, 0.14) !important;
+        box-shadow: 0 18px 48px rgba(31, 70, 130, 0.11), inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+        backdrop-filter: blur(18px) saturate(1.14) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.14) !important;
+    }
+
+        body.light-theme .status-card h2,
+        body.light-theme .status-result-card h2,
+        body.light-theme .status-result-card h3,
+        body.light-theme .status-info-item strong {
+            color: #102033 !important;
+        }
+
+        body.light-theme .status-card p,
+        body.light-theme .status-result-card p,
+        body.light-theme .status-info-item span {
+            color: #64748b !important;
+        }
+
+    body.light-theme .status-info-item,
+    body.light-theme .status-damage-box {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.16)) !important;
+        border-color: rgba(31, 70, 130, 0.13) !important;
+        color: #243b5a !important;
+    }
+
+    body.light-theme .status-alert-hint {
+        color: #1f3a5f !important;
+        background: rgba(37, 99, 235, 0.08) !important;
+        border-color: rgba(37, 99, 235, 0.18) !important;
+    }
+
+    body.light-theme .status-alert-error {
+        color: #be123c !important;
+        background: rgba(255, 228, 230, 0.68) !important;
+        border-color: rgba(244, 63, 94, 0.24) !important;
+    }
+
+    @@media (max-width: 900px) {
+        .status-form-grid,
+        .status-result-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="status-page">
+    <section class="status-card">
+        <span class="section-kicker">Статус заявки</span>
+        <h2>Проверка заявки без входа</h2>
+        <p>Введите публичный номер заявки и телефон клиента. IP-адрес для доступа не используется.</p>
+
+        <div class="status-form-grid">
+            <div>
+                <label class="form-label">Номер заявки</label>
+                <input class="form-control"
+                       @bind="publicCode"
+                       placeholder="Например: AE-7K4P-92QX" />
+            </div>
+
+            <div>
+                <label class="form-label">Телефон</label>
+                <input class="form-control"
+                       @bind="phone"
+                       placeholder="Телефон, указанный в заявке" />
+            </div>
+
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="FindRequestAsync">
+                Проверить статус
+            </button>
+        </div>
+
+        <div class="status-alert-hint">
+            Номер заявки выдаётся после сохранения заявки. Для защиты данных дополнительно проверяется телефон клиента.
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="status-alert-error">
+                @errorMessage
+            </div>
+        }
+    </section>
+
+    @if (foundRequest is not null)
+    {
+        <section class="status-result-card">
+            <span class="section-kicker">Заявка @foundRequest.PublicCode</span>
+            <h2>@foundRequest.Status</h2>
+            <p>Текущий статус обращения и предварительная информация по ремонту.</p>
+
+            <div class="status-result-grid">
+                <div class="status-info-item">
+                    <span>Клиент</span>
+                    <strong>@foundRequest.ClientName</strong>
+                </div>
+
+                <div class="status-info-item">
+                    <span>Автомобиль</span>
+                    <strong>@foundRequest.CarBrand @foundRequest.CarModel</strong>
+                </div>
+
+                <div class="status-info-item">
+                    <span>Год / поколение</span>
+                    <strong>@foundRequest.CarYear, @foundRequest.CarGeneration</strong>
+                </div>
+
+                <div class="status-info-item">
+                    <span>Предварительная сумма</span>
+                    <strong class="status-price">@foundRequest.CalculatedCost.ToString("N0") ₽</strong>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">Повреждения</h3>
+            <div class="status-damage-box">@foundRequest.DamagedPart</div>
+
+            <div class="status-alert-hint">
+                Расчёт предварительный. Итоговую стоимость лучше подтверждать после очного осмотра автомобиля.
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private string publicCode = "";
+    private string phone = "";
+    private string errorMessage = "";
+    private RepairRequest? foundRequest;
+
+    private async Task FindRequestAsync()
+    {
+        errorMessage = "";
+        foundRequest = null;
+
+        var normalizedCode = NormalizeCode(publicCode);
+        var normalizedPhone = NormalizePhone(phone);
+
+        if (string.IsNullOrWhiteSpace(normalizedCode))
+        {
+            errorMessage = "Введите номер заявки.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+        {
+            errorMessage = "Введите телефон, указанный в заявке.";
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var candidates = await db.RepairRequests
+            .AsNoTracking()
+            .Where(x => x.PublicCode == normalizedCode)
+            .ToListAsync();
+
+        foundRequest = candidates.FirstOrDefault(x => NormalizePhone(x.Phone) == normalizedPhone);
+
+        if (foundRequest is null)
+        {
+            errorMessage = "Заявка не найдена. Проверьте номер заявки и телефон.";
+        }
+    }
+
+    private static string NormalizeCode(string? value)
+    {
+        return (value ?? "")
+            .Trim()
+            .Replace(" ", "")
+            .ToUpperInvariant();
+    }
+
+    private static string NormalizePhone(string? value)
+    {
+        return new string((value ?? "").Where(char.IsDigit).ToArray());
+    }
+}

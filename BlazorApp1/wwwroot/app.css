@@ -1998,7 +1998,6 @@ h1, h2, h3, h4, h5,
 .home-welcome-card h2 {
     text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
 }
-
 /* Light glass shine for main panels */
 .home-welcome-card::before,
 .repair-workspace::before,
@@ -2044,3 +2043,2392 @@ h1, h2, h3, h4, h5,
         background: rgba(10, 26, 54, 0.82) !important;
     }
 }
+
+
+/* =========================================================
+   AUTOESTIMATE LIGHT THEME OVERRIDES
+   Toggle class: body.light-theme / html.light-theme
+========================================================= */
+
+html.light-theme,
+body.light-theme {
+    --bg-main: #eef4fb;
+    --bg-sidebar: rgba(255, 255, 255, 0.86);
+    --bg-card: rgba(255, 255, 255, 0.72);
+    --bg-card-strong: rgba(255, 255, 255, 0.92);
+    --bg-input: rgba(255, 255, 255, 0.90);
+    --border-soft: rgba(31, 70, 130, 0.14);
+    --border-strong: rgba(37, 99, 235, 0.34);
+    --text-main: #102033;
+    --text-muted: #64748b;
+    --text-soft: #475569;
+    --shadow-soft: 0 18px 50px rgba(31, 70, 130, 0.12);
+    background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 34%), radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.12), transparent 34%), #eef4fb !important;
+    color: #102033 !important;
+}
+
+    body.light-theme .app-shell {
+        background: linear-gradient(135deg, rgba(238, 244, 251, 0.96), rgba(246, 249, 253, 0.94)) !important;
+        color: #102033 !important;
+    }
+
+    body.light-theme .app-sidebar {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(232, 240, 250, 0.88)), radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 36%) !important;
+        border-right: 1px solid rgba(31, 70, 130, 0.14) !important;
+        box-shadow: 12px 0 42px rgba(31, 70, 130, 0.11) !important;
+        backdrop-filter: blur(18px) saturate(1.15);
+    }
+
+    body.light-theme .brand-block {
+        border-bottom-color: rgba(31, 70, 130, 0.12) !important;
+    }
+
+    body.light-theme .brand-title,
+    body.light-theme .admin-name,
+    body.light-theme .system-status,
+    body.light-theme .page-hero h1,
+    body.light-theme .repair-section-header h2,
+    body.light-theme .requests-header h2,
+    body.light-theme .repair-card-title h3,
+    body.light-theme .summary-title h3,
+    body.light-theme .damage-map-header h3,
+    body.light-theme .card h3,
+    body.light-theme .card h4,
+    body.light-theme .card h5,
+    body.light-theme .section-header h3,
+    body.light-theme .home-welcome-card h2,
+    body.light-theme .home-features-card h3,
+    body.light-theme .request-details-header h3,
+    body.light-theme .request-details-card h4,
+    body.light-theme .ai-damage-hero h2,
+    body.light-theme .ai-card-title h3 {
+        color: #102033 !important;
+    }
+
+    body.light-theme .brand-subtitle,
+    body.light-theme .system-date,
+    body.light-theme .admin-email,
+    body.light-theme .version-text,
+    body.light-theme .online-text,
+    body.light-theme .text-muted,
+    body.light-theme .stat-label,
+    body.light-theme .section-header p,
+    body.light-theme .repair-section-header p,
+    body.light-theme .damage-map-header p,
+    body.light-theme .summary-title p,
+    body.light-theme .home-stat-label,
+    body.light-theme .home-shortcut-card p,
+    body.light-theme .home-welcome-card p,
+    body.light-theme .ai-card-title p,
+    body.light-theme .ai-damage-hero p,
+    body.light-theme .ai-result-item span,
+    body.light-theme .ai-price-box span,
+    body.light-theme .selected-damage-info span,
+    body.light-theme .damage-cart-header p {
+        color: #64748b !important;
+    }
+
+    body.light-theme .nav-item {
+        color: #243b5a !important;
+        background: rgba(255, 255, 255, 0.58) !important;
+        border-color: rgba(31, 70, 130, 0.13) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+    }
+
+        body.light-theme .nav-item:hover,
+        body.light-theme .nav-item.active {
+            color: #0f172a !important;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.10)), rgba(255, 255, 255, 0.86) !important;
+            border-color: rgba(37, 99, 235, 0.34) !important;
+            box-shadow: 0 14px 32px rgba(37, 99, 235, 0.12) !important;
+        }
+
+    body.light-theme .nav-danger {
+        color: #b42345 !important;
+    }
+
+    body.light-theme .system-card,
+    body.light-theme .admin-card,
+    body.light-theme .topbar-search,
+    body.light-theme .topbar-button,
+    body.light-theme .top-action-button,
+    body.light-theme .system-button,
+    body.light-theme .theme-toggle-button,
+    body.light-theme .hero-stat-card,
+    body.light-theme .card,
+    body.light-theme .home-welcome-card,
+    body.light-theme .home-stat-card,
+    body.light-theme .home-average-card,
+    body.light-theme .home-chart-card,
+    body.light-theme .home-shortcut-card,
+    body.light-theme .home-features-card,
+    body.light-theme .repair-workspace,
+    body.light-theme .requests-section,
+    body.light-theme .repair-main-card,
+    body.light-theme .repair-summary-card,
+    body.light-theme .damage-map-panel,
+    body.light-theme .vehicle-map-card,
+    body.light-theme .damage-cart-panel,
+    body.light-theme .request-details-modal,
+    body.light-theme .request-details-card,
+    body.light-theme .ai-damage-hero,
+    body.light-theme .ai-glass-card,
+    body.light-theme .ai-warning-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(246, 249, 253, 0.62)) !important;
+        border-color: rgba(31, 70, 130, 0.14) !important;
+        color: #102033 !important;
+        box-shadow: 0 18px 50px rgba(31, 70, 130, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+    }
+
+    body.light-theme .page-hero {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.58)), url("/images/garage-bg.jpg") center / cover no-repeat !important;
+        border-color: rgba(31, 70, 130, 0.14) !important;
+        box-shadow: 0 18px 50px rgba(31, 70, 130, 0.12) !important;
+    }
+
+    body.light-theme .page-hero-overlay {
+        background: radial-gradient(circle at 70% 20%, rgba(37, 99, 235, 0.12), transparent 34%), linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(238, 244, 251, 0.38)) !important;
+    }
+
+    body.light-theme .page-hero p {
+        color: #475569 !important;
+    }
+
+    body.light-theme .content-surface {
+        color: #102033 !important;
+    }
+
+    body.light-theme .topbar-search input,
+    body.light-theme .form-control,
+    body.light-theme .form-select {
+        background: rgba(255, 255, 255, 0.90) !important;
+        color: #102033 !important;
+        border-color: rgba(31, 70, 130, 0.18) !important;
+    }
+
+        body.light-theme .topbar-search input::placeholder,
+        body.light-theme .form-control::placeholder {
+            color: #7b8ca5 !important;
+        }
+
+        body.light-theme .form-select option {
+            background: #ffffff !important;
+            color: #102033 !important;
+        }
+
+    body.light-theme .form-label {
+        color: #243b5a !important;
+    }
+
+    body.light-theme .btn-outline-primary,
+    body.light-theme .btn-outline-secondary,
+    body.light-theme .btn-outline-dark {
+        color: #1f3a5f !important;
+        background: rgba(255, 255, 255, 0.62) !important;
+        border-color: rgba(31, 70, 130, 0.20) !important;
+    }
+
+        body.light-theme .btn-outline-primary:hover,
+        body.light-theme .btn-outline-secondary:hover,
+        body.light-theme .btn-outline-dark:hover {
+            color: #0f172a !important;
+            background: rgba(37, 99, 235, 0.10) !important;
+            border-color: rgba(37, 99, 235, 0.38) !important;
+        }
+
+    body.light-theme .new-order-button,
+    body.light-theme .new-request-button,
+    body.light-theme .btn-primary {
+        color: #ffffff !important;
+    }
+
+    body.light-theme .table-responsive-mobile,
+    body.light-theme .table {
+        border-color: rgba(31, 70, 130, 0.14) !important;
+    }
+
+    body.light-theme .table {
+        --bs-table-color: #102033;
+        --bs-table-bg: rgba(255,255,255,0.64);
+        --bs-table-striped-bg: rgba(37, 99, 235, 0.035);
+        --bs-table-hover-bg: rgba(37, 99, 235, 0.075);
+        color: #102033 !important;
+    }
+
+        body.light-theme .table thead th {
+            background: rgba(232, 240, 250, 0.92) !important;
+            color: #102033 !important;
+            border-bottom-color: rgba(31, 70, 130, 0.14) !important;
+        }
+
+        body.light-theme .table tbody td,
+        body.light-theme .table td,
+        body.light-theme .table th {
+            color: #102033 !important;
+            border-color: rgba(31, 70, 130, 0.12) !important;
+        }
+
+    body.light-theme .summary-breakdown div,
+    body.light-theme .summary-empty,
+    body.light-theme .summary-hint,
+    body.light-theme .damage-cart-item,
+    body.light-theme .damage-part-item,
+    body.light-theme .selected-damage-info,
+    body.light-theme .request-info-item,
+    body.light-theme .client-status-message,
+    body.light-theme .status-step,
+    body.light-theme .ai-result-item,
+    body.light-theme .ai-comment-box,
+    body.light-theme .ai-json-box,
+    body.light-theme .ai-upload-zone,
+    body.light-theme .ai-damage-row,
+    body.light-theme .features-list div,
+    body.light-theme .chart-shell {
+        background: rgba(255, 255, 255, 0.62) !important;
+        border-color: rgba(31, 70, 130, 0.13) !important;
+        color: #102033 !important;
+    }
+
+        body.light-theme .damage-part-item:hover,
+        body.light-theme .damage-part-item.active {
+            background: rgba(37, 99, 235, 0.12) !important;
+            border-color: rgba(37, 99, 235, 0.32) !important;
+            color: #102033 !important;
+        }
+
+    body.light-theme .real-blueprint-v2,
+    body.light-theme .vehicle-blueprint {
+        background: radial-gradient(circle at center, rgba(37, 99, 235, 0.10), transparent 45%), linear-gradient(rgba(31, 70, 130, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 70, 130, 0.045) 1px, transparent 1px), rgba(255, 255, 255, 0.58) !important;
+        border-color: rgba(31, 70, 130, 0.14) !important;
+    }
+
+    body.light-theme .blueprint-body-underlay {
+        opacity: 0.40 !important;
+        filter: drop-shadow(0 0 22px rgba(37, 99, 235, 0.18)) saturate(1.05) contrast(1.02) !important;
+    }
+
+    body.light-theme .summary-price,
+    body.light-theme .damage-cart-price,
+    body.light-theme .ai-damage-cost,
+    body.light-theme .ai-price-box strong,
+    body.light-theme .summary-total-row strong {
+        color: #118a52 !important;
+    }
+
+    body.light-theme .summary-error,
+    body.light-theme .ai-error {
+        color: #9f1239 !important;
+        background: rgba(255, 77, 109, 0.10) !important;
+        border-color: rgba(190, 18, 60, 0.20) !important;
+    }
+
+    body.light-theme .summary-success {
+        color: #065f46 !important;
+        background: rgba(16, 185, 129, 0.12) !important;
+        border-color: rgba(5, 150, 105, 0.22) !important;
+    }
+
+    body.light-theme .alert-info,
+    body.light-theme .alert-secondary {
+        color: #1e3a5f !important;
+        background: rgba(37, 99, 235, 0.08) !important;
+        border-color: rgba(37, 99, 235, 0.18) !important;
+    }
+
+    body.light-theme .modal-kicker,
+    body.light-theme .section-kicker {
+        color: #2563eb !important;
+    }
+
+    body.light-theme .system-modal-backdrop,
+    body.light-theme .request-details-backdrop,
+    body.light-theme .photo-viewer-backdrop {
+        background: rgba(229, 237, 247, 0.72) !important;
+    }
+
+    body.light-theme .notifications-dropdown,
+    body.light-theme .system-modal,
+    body.light-theme .photo-viewer-modal {
+        background: rgba(255, 255, 255, 0.96) !important;
+        border-color: rgba(31, 70, 130, 0.16) !important;
+        color: #102033 !important;
+    }
+
+    body.light-theme .notification-item {
+        background: rgba(255, 255, 255, 0.70) !important;
+        color: #102033 !important;
+        border-color: rgba(31, 70, 130, 0.12) !important;
+    }
+
+        body.light-theme .notification-item small,
+        body.light-theme .notification-empty,
+        body.light-theme .notifications-header span {
+            color: #64748b !important;
+        }
+
+    body.light-theme .app-icon,
+    body.light-theme .section-svg-icon,
+    body.light-theme .summary-svg-icon,
+    body.light-theme .ai-card-icon {
+        color: #2563eb !important;
+        background: rgba(37, 99, 235, 0.10) !important;
+        border-color: rgba(37, 99, 235, 0.18) !important;
+    }
+
+    body.light-theme .theme-toggle-button {
+        min-width: 128px;
+    }
+
+        body.light-theme .theme-toggle-button .theme-toggle-label {
+            color: #102033 !important;
+        }
+
+    body.light-theme input[type="file"] {
+        color: #334155 !important;
+    }
+
+    body.light-theme ::-webkit-scrollbar-track {
+        background: rgba(31, 70, 130, 0.06);
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb {
+        background: rgba(37, 99, 235, 0.24);
+    }
+
+    body.light-theme ::selection {
+        background: rgba(37, 99, 235, 0.22);
+    }
+
+
+/* =========================================================
+   LIGHT THEME CONTRAST HOTFIX
+   Исправляет пересвет карточек и невидимые белые цифры.
+========================================================= */
+
+body.light-theme {
+    --bg-main: #eaf1fa;
+    --bg-sidebar: rgba(244, 248, 253, 0.94);
+    --bg-card: rgba(255, 255, 255, 0.82);
+    --bg-card-strong: rgba(255, 255, 255, 0.94);
+    --bg-input: rgba(255, 255, 255, 0.96);
+    --border-soft: rgba(35, 74, 125, 0.16);
+    --border-strong: rgba(37, 99, 235, 0.34);
+    --text-main: #102033;
+    --text-muted: #5f718a;
+    --text-soft: #334155;
+}
+
+    /* Общий фон и читаемость */
+
+    body.light-theme,
+    body.light-theme html {
+        background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 34%), radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 36%), #eaf1fa !important;
+        color: #102033 !important;
+    }
+
+        body.light-theme .app-shell {
+            background: linear-gradient(135deg, rgba(234, 241, 250, 0.92), rgba(244, 248, 253, 0.96)), #eaf1fa !important;
+            color: #102033 !important;
+        }
+
+        body.light-theme .app-main {
+            color: #102033 !important;
+        }
+
+        /* Sidebar */
+
+        body.light-theme .app-sidebar {
+            background: linear-gradient(180deg, rgba(247, 250, 255, 0.96), rgba(231, 239, 249, 0.92)) !important;
+            border-right-color: rgba(35, 74, 125, 0.14) !important;
+            box-shadow: 10px 0 34px rgba(31, 70, 130, 0.08) !important;
+        }
+
+        body.light-theme .brand-title,
+        body.light-theme .admin-name,
+        body.light-theme .system-status {
+            color: #102033 !important;
+        }
+
+        body.light-theme .brand-subtitle,
+        body.light-theme .admin-email,
+        body.light-theme .system-date,
+        body.light-theme .version-text,
+        body.light-theme .online-text {
+            color: #64748b !important;
+        }
+
+        body.light-theme .nav-item {
+            color: #223955 !important;
+            background: rgba(255, 255, 255, 0.72) !important;
+            border-color: rgba(35, 74, 125, 0.13) !important;
+            box-shadow: 0 10px 28px rgba(31, 70, 130, 0.07) !important;
+        }
+
+            body.light-theme .nav-item:hover,
+            body.light-theme .nav-item.active {
+                color: #102033 !important;
+                background: linear-gradient(135deg, rgba(37, 99, 235, 0.11), rgba(124, 58, 237, 0.08)), rgba(255, 255, 255, 0.82) !important;
+                border-color: rgba(37, 99, 235, 0.32) !important;
+                box-shadow: 0 14px 34px rgba(37, 99, 235, 0.12) !important;
+            }
+
+        body.light-theme .nav-danger {
+            color: #be123c !important;
+        }
+
+        body.light-theme .system-card,
+        body.light-theme .admin-card {
+            background: rgba(255, 255, 255, 0.74) !important;
+            border-color: rgba(35, 74, 125, 0.13) !important;
+            box-shadow: 0 12px 28px rgba(31, 70, 130, 0.08) !important;
+        }
+
+        /* Topbar */
+
+        body.light-theme .app-topbar {
+            color: #102033 !important;
+        }
+
+        body.light-theme .topbar-button,
+        body.light-theme .theme-toggle-button {
+            color: #102033 !important;
+            background: rgba(255, 255, 255, 0.74) !important;
+            border-color: rgba(35, 74, 125, 0.16) !important;
+            box-shadow: 0 10px 26px rgba(31, 70, 130, 0.08) !important;
+        }
+
+            body.light-theme .topbar-button:hover,
+            body.light-theme .theme-toggle-button:hover {
+                background: rgba(255, 255, 255, 0.94) !important;
+                border-color: rgba(37, 99, 235, 0.32) !important;
+            }
+
+        /* Не даём основной кнопке теряться на белом фоне */
+
+        body.light-theme .new-order-button,
+        body.light-theme .new-request-button,
+        body.light-theme a.new-order-button,
+        body.light-theme button.new-order-button {
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+            border-color: rgba(88, 80, 236, 0.62) !important;
+            box-shadow: 0 16px 34px rgba(37, 99, 235, 0.20) !important;
+            opacity: 1 !important;
+        }
+
+            body.light-theme .new-order-button *,
+            body.light-theme .new-request-button * {
+                color: #ffffff !important;
+                opacity: 1 !important;
+            }
+
+        /* Hero */
+
+        body.light-theme .page-hero {
+            background: linear-gradient(90deg, rgba(255,255,255,0.84), rgba(255,255,255,0.58)), url("/images/garage-bg.jpg") center / cover no-repeat !important;
+            border-color: rgba(35, 74, 125, 0.16) !important;
+            box-shadow: 0 18px 40px rgba(31, 70, 130, 0.12) !important;
+        }
+
+            body.light-theme .page-hero h1,
+            body.light-theme .home-welcome-card h2,
+            body.light-theme .repair-section-header h2,
+            body.light-theme .requests-header h2,
+            body.light-theme .section-header h3,
+            body.light-theme .card h3,
+            body.light-theme .card h4,
+            body.light-theme .card h5 {
+                color: #102033 !important;
+                text-shadow: none !important;
+            }
+
+            body.light-theme .page-hero p,
+            body.light-theme .home-welcome-card p,
+            body.light-theme .repair-section-header p,
+            body.light-theme .section-header p {
+                color: #475569 !important;
+            }
+
+        /* Карточки и стекло: меньше пересвета, больше контраста */
+
+        body.light-theme .home-welcome-card,
+        body.light-theme .home-stat-card,
+        body.light-theme .home-average-card,
+        body.light-theme .home-chart-card,
+        body.light-theme .home-shortcut-card,
+        body.light-theme .home-features-card,
+        body.light-theme .repair-workspace,
+        body.light-theme .requests-section,
+        body.light-theme .repair-main-card,
+        body.light-theme .repair-summary-card,
+        body.light-theme .damage-map-panel,
+        body.light-theme .vehicle-map-card,
+        body.light-theme .ai-hero-card,
+        body.light-theme .ai-upload-card,
+        body.light-theme .ai-result-card,
+        body.light-theme .warning-card,
+        body.light-theme .card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(239, 246, 255, 0.74)) !important;
+            color: #102033 !important;
+            border-color: rgba(35, 74, 125, 0.16) !important;
+            box-shadow: 0 16px 38px rgba(31, 70, 130, 0.10) !important;
+        }
+
+        /* Самая важная правка: цифры в статистике */
+
+        body.light-theme .hero-stat-card,
+        body.light-theme .home-stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(232, 240, 250, 0.78)) !important;
+            border-color: rgba(35, 74, 125, 0.16) !important;
+            box-shadow: 0 14px 34px rgba(31, 70, 130, 0.11) !important;
+        }
+
+        body.light-theme .stat-label,
+        body.light-theme .home-stat-label {
+            color: #5f718a !important;
+        }
+
+        body.light-theme .stat-value,
+        body.light-theme .home-stat-card strong,
+        body.light-theme .home-average-card strong,
+        body.light-theme .home-stat-card .stat-value,
+        body.light-theme .home-average-card .stat-value {
+            color: #102033 !important;
+            opacity: 1 !important;
+            text-shadow: none !important;
+        }
+
+        body.light-theme .stat-positive {
+            color: #059669 !important;
+            opacity: 1 !important;
+        }
+
+        /* Все потенциально белые заголовки внутри карточек */
+
+        body.light-theme .home-shortcut-card,
+        body.light-theme .home-shortcut-card h4,
+        body.light-theme .home-shortcut-card p,
+        body.light-theme .home-features-card h3,
+        body.light-theme .features-list div,
+        body.light-theme .repair-card-title h3,
+        body.light-theme .summary-title h3,
+        body.light-theme .summary-hint strong,
+        body.light-theme .damage-cart-header h3,
+        body.light-theme .damage-map-header h3,
+        body.light-theme .vehicle-map-toolbar strong,
+        body.light-theme .damage-cart-item strong,
+        body.light-theme .request-details-card h4,
+        body.light-theme .request-info-item strong,
+        body.light-theme .ai-result-item strong,
+        body.light-theme .ai-damage-row strong,
+        body.light-theme .ai-comment-box strong {
+            color: #102033 !important;
+            text-shadow: none !important;
+        }
+
+            body.light-theme .home-shortcut-card p,
+            body.light-theme .summary-title p,
+            body.light-theme .summary-breakdown span,
+            body.light-theme .summary-empty,
+            body.light-theme .summary-hint span,
+            body.light-theme .damage-cart-header p,
+            body.light-theme .damage-cart-item span,
+            body.light-theme .damage-map-header p,
+            body.light-theme .selected-damage-info span,
+            body.light-theme .vehicle-map-toolbar,
+            body.light-theme .upload-content span,
+            body.light-theme .ai-result-item span,
+            body.light-theme .ai-damage-row span,
+            body.light-theme .ai-damage-row small {
+                color: #5f718a !important;
+            }
+
+        /* Таблицы */
+
+        body.light-theme .table-responsive-mobile {
+            background: rgba(255, 255, 255, 0.78) !important;
+            border-color: rgba(35, 74, 125, 0.15) !important;
+        }
+
+        body.light-theme .table,
+        body.light-theme .table-striped,
+        body.light-theme .table-hover {
+            --bs-table-color: #102033 !important;
+            --bs-table-bg: rgba(255,255,255,0.70) !important;
+            --bs-table-striped-color: #102033 !important;
+            --bs-table-striped-bg: rgba(37, 99, 235, 0.045) !important;
+            --bs-table-hover-color: #102033 !important;
+            --bs-table-hover-bg: rgba(37, 99, 235, 0.085) !important;
+            color: #102033 !important;
+        }
+
+            body.light-theme .table thead th {
+                background: rgba(226, 237, 249, 0.95) !important;
+                color: #102033 !important;
+            }
+
+            body.light-theme .table tbody td,
+            body.light-theme .table td,
+            body.light-theme .table th,
+            body.light-theme .table strong {
+                color: #102033 !important;
+            }
+
+            body.light-theme .table small,
+            body.light-theme .text-muted {
+                color: #64748b !important;
+            }
+
+        /* Формы */
+
+        body.light-theme .form-label {
+            color: #243b5a !important;
+        }
+
+        body.light-theme .form-control,
+        body.light-theme .form-select {
+            color: #102033 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-color: rgba(35, 74, 125, 0.18) !important;
+        }
+
+            body.light-theme .form-control:focus,
+            body.light-theme .form-select:focus {
+                border-color: rgba(37, 99, 235, 0.58) !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+            }
+
+        /* Карта повреждений */
+
+        body.light-theme .damage-part-item {
+            background: rgba(255, 255, 255, 0.72) !important;
+            color: #102033 !important;
+            border-color: rgba(35, 74, 125, 0.14) !important;
+        }
+
+            body.light-theme .damage-part-item:hover,
+            body.light-theme .damage-part-item.active {
+                background: rgba(37, 99, 235, 0.12) !important;
+                border-color: rgba(37, 99, 235, 0.34) !important;
+                color: #102033 !important;
+            }
+
+        body.light-theme .real-blueprint-v2,
+        body.light-theme .vehicle-blueprint {
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.08), transparent 45%), linear-gradient(rgba(35, 74, 125, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(35, 74, 125, 0.05) 1px, transparent 1px), rgba(241, 247, 253, 0.72) !important;
+        }
+
+        /* Модалки */
+
+        body.light-theme .request-details-modal,
+        body.light-theme .system-modal,
+        body.light-theme .photo-viewer-modal,
+        body.light-theme .notifications-dropdown {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 251, 0.94)) !important;
+            color: #102033 !important;
+            border-color: rgba(35, 74, 125, 0.16) !important;
+            box-shadow: 0 30px 80px rgba(31, 70, 130, 0.18) !important;
+        }
+
+        body.light-theme .request-details-header h3,
+        body.light-theme .photo-viewer-header strong,
+        body.light-theme .notifications-title {
+            color: #102033 !important;
+        }
+
+        /* График: оставляем тёмный холст для читаемости, но не пересвечиваем вокруг */
+
+        body.light-theme .chart-shell {
+            background: rgba(10, 25, 47, 0.92) !important;
+            border-color: rgba(35, 74, 125, 0.18) !important;
+        }
+
+        /* Акценты */
+
+        body.light-theme .summary-price,
+        body.light-theme .damage-cart-price,
+        body.light-theme .ai-damage-cost,
+        body.light-theme .ai-price-box strong,
+        body.light-theme .summary-total-row strong {
+            color: #047857 !important;
+        }
+
+        body.light-theme .section-kicker,
+        body.light-theme .modal-kicker {
+            color: #2563eb !important;
+        }
+
+        /* Делаем отключённые элементы читаемыми */
+
+        body.light-theme button:disabled,
+        body.light-theme .btn:disabled,
+        body.light-theme .new-order-button:disabled {
+            opacity: 0.62 !important;
+            filter: none !important;
+        }
+
+
+/* =========================================================
+   LIGHT THEME FINAL POLISH FIX
+   Правки по найденным визуальным дефектам:
+   модалки, AI-блок, login, кнопки, карта кузова, детали заявки.
+========================================================= */
+
+body.light-theme {
+    --light-page: #eef4fb;
+    --light-card: rgba(255, 255, 255, 0.90);
+    --light-card-strong: rgba(255, 255, 255, 0.97);
+    --light-panel: rgba(242, 247, 253, 0.88);
+    --light-border: rgba(47, 84, 130, 0.17);
+    --light-border-strong: rgba(37, 99, 235, 0.34);
+    --light-text: #0f1f33;
+    --light-text-2: #223955;
+    --light-muted: #64748b;
+    --light-muted-2: #8292aa;
+}
+
+    /* 1. Глобальная читаемость в светлой теме */
+
+    body.light-theme,
+    body.light-theme .content-surface,
+    body.light-theme .repair-page,
+    body.light-theme .home-page,
+    body.light-theme .ai-page {
+        color: var(--light-text) !important;
+    }
+
+        body.light-theme h1,
+        body.light-theme h2,
+        body.light-theme h3,
+        body.light-theme h4,
+        body.light-theme h5,
+        body.light-theme h6,
+        body.light-theme strong,
+        body.light-theme label,
+        body.light-theme .form-label {
+            color: var(--light-text) !important;
+            text-shadow: none !important;
+        }
+
+        body.light-theme p,
+        body.light-theme span,
+        body.light-theme small,
+        body.light-theme .text-muted {
+            text-shadow: none !important;
+        }
+
+        /* Не перекрашивать служебные цветные индикаторы полностью */
+        body.light-theme .badge,
+        body.light-theme .notification-badge,
+        body.light-theme .status-dot,
+        body.light-theme .legend-dot,
+        body.light-theme .part-dot {
+            color: inherit;
+        }
+
+        /* 2. Верхняя панель и кнопки */
+
+        body.light-theme .topbar-button,
+        body.light-theme .theme-toggle-button,
+        body.light-theme .system-button,
+        body.light-theme .notification-button {
+            color: var(--light-text) !important;
+            background: rgba(255,255,255,0.82) !important;
+            border-color: var(--light-border) !important;
+        }
+
+            body.light-theme .topbar-button svg,
+            body.light-theme .theme-toggle-button svg,
+            body.light-theme .system-button svg,
+            body.light-theme .notification-button svg {
+                color: #2563eb !important;
+                stroke: currentColor !important;
+            }
+
+        body.light-theme .new-order-button,
+        body.light-theme a.new-order-button,
+        body.light-theme button.new-order-button,
+        body.light-theme .new-request-button,
+        body.light-theme a[href="/repair-requests"].new-order-button {
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+            border-color: rgba(37, 99, 235, 0.55) !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+            body.light-theme .new-order-button *,
+            body.light-theme .new-request-button * {
+                color: #ffffff !important;
+                opacity: 1 !important;
+                filter: none !important;
+            }
+
+            body.light-theme .new-order-button:disabled,
+            body.light-theme .new-request-button:disabled {
+                opacity: 0.88 !important;
+            }
+
+        /* 3. Бейдж BETA / GEMINI */
+
+        body.light-theme .nav-beta,
+        body.light-theme .beta-badge,
+        body.light-theme .ai-badge,
+        body.light-theme .demo-badge,
+        body.light-theme .gemini-badge {
+            color: #5b21b6 !important;
+            background: rgba(124, 58, 237, 0.12) !important;
+            border: 1px solid rgba(124, 58, 237, 0.36) !important;
+            opacity: 1 !important;
+        }
+
+        /* 4. Системная модалка "О системе" */
+
+        body.light-theme .system-modal,
+        body.light-theme .system-modal-content,
+        body.light-theme .modal-content,
+        body.light-theme .request-details-modal,
+        body.light-theme .photo-viewer-modal {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(239,246,255,0.96)) !important;
+            color: var(--light-text) !important;
+            border-color: var(--light-border) !important;
+        }
+
+            body.light-theme .system-modal *,
+            body.light-theme .modal-content *,
+            body.light-theme .request-details-modal *,
+            body.light-theme .photo-viewer-modal * {
+                text-shadow: none !important;
+            }
+
+            body.light-theme .system-modal h2,
+            body.light-theme .system-modal h3,
+            body.light-theme .system-modal h4,
+            body.light-theme .modal-content h2,
+            body.light-theme .modal-content h3,
+            body.light-theme .modal-content h4 {
+                color: var(--light-text) !important;
+            }
+
+            body.light-theme .system-modal p,
+            body.light-theme .system-modal li,
+            body.light-theme .system-modal span,
+            body.light-theme .modal-content p,
+            body.light-theme .modal-content li,
+            body.light-theme .modal-content span {
+                color: #475569 !important;
+            }
+
+            body.light-theme .system-modal .modal-kicker,
+            body.light-theme .modal-content .modal-kicker {
+                color: #2563eb !important;
+            }
+
+            body.light-theme .system-modal .modal-close,
+            body.light-theme .system-modal-close,
+            body.light-theme .request-details-close,
+            body.light-theme .photo-viewer-close {
+                color: #0f1f33 !important;
+                background: rgba(255,255,255,0.82) !important;
+                border-color: rgba(37, 99, 235, 0.18) !important;
+                opacity: 1 !important;
+            }
+
+            body.light-theme .system-modal .modal-stat,
+            body.light-theme .system-modal .system-stat,
+            body.light-theme .modal-content .modal-stat,
+            body.light-theme .modal-content .system-stat {
+                background: rgba(255,255,255,0.88) !important;
+                border-color: var(--light-border) !important;
+            }
+
+                body.light-theme .system-modal .modal-stat strong,
+                body.light-theme .system-modal .system-stat strong,
+                body.light-theme .modal-content .modal-stat strong,
+                body.light-theme .modal-content .system-stat strong {
+                    color: var(--light-text) !important;
+                }
+
+            body.light-theme .system-modal .system-purpose,
+            body.light-theme .system-modal .system-features,
+            body.light-theme .modal-content .system-purpose,
+            body.light-theme .modal-content .system-features {
+                background: rgba(226, 236, 248, 0.90) !important;
+                border-color: rgba(47, 84, 130, 0.16) !important;
+                color: var(--light-text) !important;
+            }
+
+        /* 5. Login / авторизация */
+
+        body.light-theme .login-page,
+        body.light-theme .login-card,
+        body.light-theme .auth-card,
+        body.light-theme .login-panel {
+            color: var(--light-text) !important;
+        }
+
+        body.light-theme .login-card,
+        body.light-theme .auth-card,
+        body.light-theme .login-panel,
+        body.light-theme .card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(236,244,253,0.84)) !important;
+            border-color: var(--light-border) !important;
+            box-shadow: 0 18px 45px rgba(31, 70, 130, 0.12) !important;
+        }
+
+            body.light-theme .login-card h1,
+            body.light-theme .login-card h2,
+            body.light-theme .login-card h3,
+            body.light-theme .auth-card h1,
+            body.light-theme .auth-card h2,
+            body.light-theme .auth-card h3 {
+                color: var(--light-text) !important;
+            }
+
+            body.light-theme .login-card p,
+            body.light-theme .auth-card p {
+                color: var(--light-muted) !important;
+            }
+
+            body.light-theme .login-card .form-control,
+            body.light-theme .auth-card .form-control,
+            body.light-theme .login-card input,
+            body.light-theme .auth-card input {
+                color: var(--light-text) !important;
+                background: rgba(255,255,255,0.95) !important;
+                border-color: rgba(47, 84, 130, 0.18) !important;
+            }
+
+                body.light-theme .login-card .form-control::placeholder,
+                body.light-theme .auth-card .form-control::placeholder,
+                body.light-theme .login-card input::placeholder,
+                body.light-theme .auth-card input::placeholder {
+                    color: #8b9bb3 !important;
+                }
+
+        /* 6. Главная статистика и график */
+
+        body.light-theme .home-stat-card strong,
+        body.light-theme .stat-value,
+        body.light-theme .home-average-card strong,
+        body.light-theme .summary-price,
+        body.light-theme .request-price-large {
+            color: #0f1f33 !important;
+            opacity: 1 !important;
+        }
+
+        body.light-theme .home-average-card,
+        body.light-theme .home-stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(234,242,251,0.82)) !important;
+        }
+
+        body.light-theme .chart-shell {
+            background: #172335 !important;
+            border-color: rgba(47, 84, 130, 0.18) !important;
+        }
+
+            body.light-theme .chart-shell *,
+            body.light-theme canvas {
+                color: #dbeafe !important;
+            }
+
+        /* 7. AI-страница: предупреждения, комментарии, карточки результата */
+
+        body.light-theme .ai-result-card,
+        body.light-theme .ai-upload-card,
+        body.light-theme .ai-hero-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(238,245,253,0.84)) !important;
+            color: var(--light-text) !important;
+        }
+
+            body.light-theme .ai-result-card h3,
+            body.light-theme .ai-result-card h4,
+            body.light-theme .ai-upload-card h3,
+            body.light-theme .ai-upload-card h4 {
+                color: var(--light-text) !important;
+            }
+
+        body.light-theme .ai-confidence-label,
+        body.light-theme .ai-result-item span,
+        body.light-theme .ai-damage-row span,
+        body.light-theme .ai-damage-row small {
+            color: #64748b !important;
+        }
+
+        body.light-theme .ai-result-item,
+        body.light-theme .ai-damage-row,
+        body.light-theme .ai-comment-box {
+            background: rgba(255,255,255,0.74) !important;
+            border-color: rgba(47, 84, 130, 0.15) !important;
+        }
+
+            body.light-theme .ai-result-item strong,
+            body.light-theme .ai-damage-row strong,
+            body.light-theme .ai-comment-box strong,
+            body.light-theme .ai-comment-box p {
+                color: var(--light-text) !important;
+            }
+
+        body.light-theme .ai-price-box {
+            background: rgba(209, 250, 229, 0.68) !important;
+            border-color: rgba(5, 150, 105, 0.25) !important;
+        }
+
+            body.light-theme .ai-price-box span,
+            body.light-theme .ai-price-box small {
+                color: #166534 !important;
+            }
+
+            body.light-theme .ai-price-box strong,
+            body.light-theme .ai-damage-cost {
+                color: #047857 !important;
+            }
+
+        body.light-theme .ai-review-warning,
+        body.light-theme .ai-warning,
+        body.light-theme .warning-box,
+        body.light-theme .ai-apply-note,
+        body.light-theme .warning-card {
+            background: rgba(255, 247, 214, 0.86) !important;
+            border-color: rgba(245, 158, 11, 0.28) !important;
+            color: #8a4b00 !important;
+        }
+
+            body.light-theme .ai-review-warning *,
+            body.light-theme .ai-warning *,
+            body.light-theme .warning-box *,
+            body.light-theme .warning-card *,
+            body.light-theme .ai-apply-note * {
+                color: #8a4b00 !important;
+            }
+
+            /* Нижний warning на AI-странице */
+            body.light-theme .warning-card strong,
+            body.light-theme .warning-card b {
+                color: #92400e !important;
+            }
+
+            body.light-theme .warning-card span,
+            body.light-theme .warning-card p {
+                color: #1f2937 !important;
+            }
+
+        /* 8. Форма заявки: чипы, корзина, кнопки */
+
+        body.light-theme .damage-chip {
+            color: var(--light-text-2) !important;
+            background: rgba(255,255,255,0.70) !important;
+            border-color: rgba(47, 84, 130, 0.16) !important;
+        }
+
+            body.light-theme .damage-chip:hover,
+            body.light-theme .damage-chip.active {
+                color: #0f1f33 !important;
+                background: rgba(37, 99, 235, 0.10) !important;
+                border-color: rgba(37, 99, 235, 0.32) !important;
+            }
+
+            body.light-theme .damage-chip.disabled,
+            body.light-theme .damage-chip:disabled {
+                opacity: 0.55 !important;
+                color: #8aa0bd !important;
+                background: rgba(255,255,255,0.46) !important;
+            }
+
+        body.light-theme .damage-cart-panel,
+        body.light-theme .damage-cart-empty,
+        body.light-theme .damage-cart-item,
+        body.light-theme .summary-breakdown div,
+        body.light-theme .summary-empty,
+        body.light-theme .summary-hint,
+        body.light-theme .selected-damage-info {
+            background: rgba(255,255,255,0.70) !important;
+            border-color: rgba(47, 84, 130, 0.14) !important;
+            color: var(--light-text) !important;
+        }
+
+        body.light-theme .damage-cart-empty {
+            color: #64748b !important;
+        }
+
+        body.light-theme .summary-error {
+            color: #9f1239 !important;
+            background: rgba(255, 228, 230, 0.78) !important;
+            border-color: rgba(225, 29, 72, 0.24) !important;
+        }
+
+        body.light-theme .summary-success {
+            color: #166534 !important;
+            background: rgba(220, 252, 231, 0.80) !important;
+            border-color: rgba(22, 163, 74, 0.25) !important;
+        }
+
+        /* 9. Карта кузова: убрать грязные серые прямоугольники и сохранить видимость */
+
+        body.light-theme .real-blueprint-v2 {
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.07), transparent 46%), linear-gradient(rgba(35, 74, 125, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(35, 74, 125, 0.035) 1px, transparent 1px), rgba(246, 250, 255, 0.88) !important;
+            border-color: rgba(47, 84, 130, 0.14) !important;
+        }
+
+            body.light-theme .real-blueprint-v2::after {
+                background: radial-gradient(circle at center, transparent 48%, rgba(226, 236, 248, 0.20) 78%) !important;
+            }
+
+        body.light-theme .blueprint-body-underlay {
+            opacity: 0.34 !important;
+            filter: drop-shadow(0 0 18px rgba(37, 99, 235, 0.14)) saturate(0.92) contrast(0.96) !important;
+        }
+
+        body.light-theme .vehicle-svg-v2 {
+            filter: drop-shadow(0 0 16px rgba(37, 99, 235, 0.12)) !important;
+        }
+
+        body.light-theme .vehicle-shell-v2,
+        body.light-theme .vehicle-cabin-v2,
+        body.light-theme .vehicle-glass-v2,
+        body.light-theme .vehicle-side-glass-v2 {
+            stroke: rgba(37, 99, 235, 0.30) !important;
+        }
+
+        body.light-theme .svg-label-v2 {
+            fill: #0f1f33 !important;
+            stroke: rgba(255,255,255,0.90) !important;
+            stroke-width: 4px !important;
+        }
+
+        /* 10. Детальная карточка заявки */
+
+        body.light-theme .request-details-card,
+        body.light-theme .request-info-item,
+        body.light-theme .client-status-message,
+        body.light-theme .status-step {
+            background: rgba(255,255,255,0.72) !important;
+            border-color: rgba(47, 84, 130, 0.14) !important;
+            color: var(--light-text) !important;
+        }
+
+            body.light-theme .request-details-kicker,
+            body.light-theme .request-info-item span,
+            body.light-theme .status-step-caption {
+                color: #64748b !important;
+            }
+
+        body.light-theme .request-damage-text {
+            color: #1e3a5f !important;
+            opacity: 1 !important;
+        }
+
+        body.light-theme .status-step-title,
+        body.light-theme .client-status-message strong,
+        body.light-theme .request-info-item strong {
+            color: var(--light-text) !important;
+        }
+
+        body.light-theme .photo-preview-button {
+            color: #1e3a8a !important;
+            background: rgba(219, 234, 254, 0.82) !important;
+            border-color: rgba(37, 99, 235, 0.24) !important;
+            opacity: 1 !important;
+        }
+
+            body.light-theme .photo-preview-button:hover {
+                color: #ffffff !important;
+                background: #2563eb !important;
+            }
+
+        /* 11. Служебные кнопки и outline */
+
+        body.light-theme .btn-outline-primary,
+        body.light-theme .btn-outline-secondary,
+        body.light-theme .btn-outline-dark,
+        body.light-theme .request-table-action,
+        body.light-theme .request-status-actions button {
+            color: #1e3a5f !important;
+            background: rgba(255,255,255,0.72) !important;
+            border-color: rgba(47, 84, 130, 0.18) !important;
+        }
+
+            body.light-theme .btn-outline-primary:hover,
+            body.light-theme .btn-outline-secondary:hover,
+            body.light-theme .btn-outline-dark:hover,
+            body.light-theme .request-table-action:hover,
+            body.light-theme .request-status-actions button:hover {
+                color: #ffffff !important;
+                background: #2563eb !important;
+                border-color: #2563eb !important;
+            }
+
+        body.light-theme .btn-primary,
+        body.light-theme .home-primary-button,
+        body.light-theme .ai-apply-button {
+            color: #ffffff !important;
+            opacity: 1 !important;
+        }
+
+            body.light-theme .btn-primary *,
+            body.light-theme .home-primary-button *,
+            body.light-theme .ai-apply-button * {
+                color: #ffffff !important;
+                opacity: 1 !important;
+            }
+
+        /* 12. Upload/file inputs */
+
+        body.light-theme input[type="file"] {
+            color: var(--light-text) !important;
+        }
+
+            body.light-theme input[type="file"]::file-selector-button {
+                color: #ffffff !important;
+                background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+            }
+
+        /* 13. Фото/плейсхолдеры */
+
+        body.light-theme .request-photo-empty,
+        body.light-theme .upload-content span {
+            color: #64748b !important;
+        }
+
+        body.light-theme .request-photo-box {
+            background: rgba(241, 247, 253, 0.78) !important;
+            border-color: rgba(47, 84, 130, 0.15) !important;
+        }
+
+        /* 14. Специально для белого текста, который оставался от тёмной темы */
+
+        body.light-theme .home-welcome-card *,
+        body.light-theme .home-features-card *,
+        body.light-theme .repair-workspace *,
+        body.light-theme .requests-section *,
+        body.light-theme .ai-result-card *,
+        body.light-theme .request-details-modal * {
+            text-shadow: none !important;
+        }
+
+        body.light-theme .home-welcome-card .btn-primary,
+        body.light-theme .home-welcome-card .btn-primary *,
+        body.light-theme .repair-workspace .btn-primary,
+        body.light-theme .repair-workspace .btn-primary *,
+        body.light-theme .ai-result-card .ai-apply-button,
+        body.light-theme .ai-result-card .ai-apply-button * {
+            color: #ffffff !important;
+        }
+
+        /* 15. Если текст всё ещё наследует слишком светлый цвет */
+
+        body.light-theme .muted-light-fix,
+        body.light-theme .description,
+        body.light-theme .caption {
+            color: #64748b !important;
+        }
+
+
+
+
+        /* =========================================================
+   LIGHT THEME AI READABILITY HOTFIX
+   Исправляет нечитаемый GEMINI-бейдж и пустой блок результата AI
+========================================================= */
+
+        body.light-theme .gemini-badge,
+        body.light-theme .ai-badge.gemini,
+        body.light-theme .demo-badge.gemini,
+        body.light-theme .hero-badge.gemini,
+        body.light-theme .page-badge.gemini,
+        body.light-theme .section-badge.gemini,
+        body.light-theme .ai-hero-badge,
+        body.light-theme .ai-page .demo-badge,
+        body.light-theme .ai-page .gemini-badge {
+            color: #4c1d95 !important;
+            background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(168,85,247,0.20)) !important;
+            border: 1px solid rgba(124,58,237,0.34) !important;
+            box-shadow: 0 8px 20px rgba(124,58,237,0.10) !important;
+            text-shadow: none !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+            body.light-theme .gemini-badge *,
+            body.light-theme .ai-hero-badge *,
+            body.light-theme .ai-page .demo-badge *,
+            body.light-theme .ai-page .gemini-badge * {
+                color: #4c1d95 !important;
+                text-shadow: none !important;
+                opacity: 1 !important;
+            }
+
+        /* Пустой блок результата AI */
+        body.light-theme .ai-result-empty,
+        body.light-theme .ai-empty-state,
+        body.light-theme .ai-result-placeholder,
+        body.light-theme .ai-placeholder,
+        body.light-theme .result-placeholder,
+        body.light-theme .empty-ai-state,
+        body.light-theme .ai-side-empty,
+        body.light-theme .ai-empty-box,
+        body.light-theme .placeholder-panel,
+        body.light-theme .placeholder-card,
+        body.light-theme .ai-result-card .empty-state,
+        body.light-theme .ai-result-card .placeholder-state,
+        body.light-theme .ai-result-card .placeholder-box,
+        body.light-theme .ai-result-card .empty-box,
+        body.light-theme .ai-result-card .result-placeholder,
+        body.light-theme .ai-result-card .ai-placeholder,
+        body.light-theme .ai-result-card .ai-empty-state,
+        body.light-theme .ai-page .ai-result-card > div:last-child:has(> span),
+        body.light-theme .ai-page .ai-result-card > div:last-child:has(> p) {
+            background: linear-gradient(135deg, rgba(232,238,246,0.96), rgba(220,228,240,0.92)) !important;
+            border: 1px solid rgba(47,84,130,0.16) !important;
+            color: #41546f !important;
+            text-shadow: none !important;
+        }
+
+            body.light-theme .ai-result-empty *,
+            body.light-theme .ai-empty-state *,
+            body.light-theme .ai-result-placeholder *,
+            body.light-theme .ai-placeholder *,
+            body.light-theme .result-placeholder *,
+            body.light-theme .empty-ai-state *,
+            body.light-theme .ai-side-empty *,
+            body.light-theme .ai-empty-box *,
+            body.light-theme .placeholder-panel *,
+            body.light-theme .placeholder-card *,
+            body.light-theme .ai-result-card .empty-state *,
+            body.light-theme .ai-result-card .placeholder-state *,
+            body.light-theme .ai-result-card .placeholder-box *,
+            body.light-theme .ai-result-card .empty-box *,
+            body.light-theme .ai-result-card .result-placeholder *,
+            body.light-theme .ai-result-card .ai-placeholder *,
+            body.light-theme .ai-result-card .ai-empty-state * {
+                color: #6b7f99 !important;
+                text-shadow: none !important;
+            }
+
+        /* Текст иконки/описания внутри правой карточки результата */
+        body.light-theme .ai-result-card .placeholder-title,
+        body.light-theme .ai-result-card .empty-title,
+        body.light-theme .ai-result-card .ai-empty-title {
+            color: #1f3553 !important;
+        }
+
+        body.light-theme .ai-result-card .placeholder-text,
+        body.light-theme .ai-result-card .empty-text,
+        body.light-theme .ai-result-card .ai-empty-text,
+        body.light-theme .ai-result-card .empty-state p,
+        body.light-theme .ai-result-card .placeholder-state p,
+        body.light-theme .ai-result-card .ai-placeholder p,
+        body.light-theme .ai-result-card .result-placeholder p,
+        body.light-theme .ai-result-card .empty-state span,
+        body.light-theme .ai-result-card .placeholder-state span,
+        body.light-theme .ai-result-card .ai-placeholder span,
+        body.light-theme .ai-result-card .result-placeholder span {
+            color: #6b7f99 !important;
+        }
+
+        /* Файл не выбран / фото ещё не выбрано */
+        body.light-theme .upload-placeholder,
+        body.light-theme .upload-empty,
+        body.light-theme .file-placeholder,
+        body.light-theme .upload-content,
+        body.light-theme .upload-content p,
+        body.light-theme .upload-content span,
+        body.light-theme .upload-hint,
+        body.light-theme .file-hint,
+        body.light-theme .image-upload-placeholder,
+        body.light-theme .request-photo-empty {
+            color: #8b9bb3 !important;
+            text-shadow: none !important;
+        }
+
+        /* Правый result card: общий контраст */
+        body.light-theme .ai-result-card {
+            color: #0f1f33 !important;
+        }
+
+            body.light-theme .ai-result-card p,
+            body.light-theme .ai-result-card span,
+            body.light-theme .ai-result-card small {
+                color: #64748b !important;
+            }
+
+            body.light-theme .ai-result-card h3,
+            body.light-theme .ai-result-card h4,
+            body.light-theme .ai-result-card strong,
+            body.light-theme .ai-result-card .card-title {
+                color: #0f1f33 !important;
+            }
+/* =========================================================
+   LIGHT THEME READABILITY FIX — FINAL OVERRIDES
+   Этот блок должен быть в самом конце CSS-файла.
+   Он перебивает старые тёмные glass-стили только для body.light-theme.
+   ========================================================= */
+
+body.light-theme {
+    --bg-main: #f4f7fb;
+    --bg-sidebar: rgba(255, 255, 255, 0.88);
+    --bg-card: rgba(255, 255, 255, 0.86);
+    --bg-card-strong: rgba(255, 255, 255, 0.96);
+    --bg-input: rgba(255, 255, 255, 0.96);
+    --border-soft: rgba(15, 23, 42, 0.12);
+    --border-strong: rgba(37, 99, 235, 0.36);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-soft: #334155;
+    --accent-blue: #2563eb;
+    --accent-cyan: #0891b2;
+    --accent-purple: #7c3aed;
+    --accent-green: #15803d;
+    --accent-yellow: #b45309;
+    --accent-red: #dc2626;
+    --shadow-soft: 0 18px 48px rgba(15, 23, 42, 0.10);
+    --liquid-bg: rgba(255, 255, 255, 0.78);
+    --liquid-bg-soft: rgba(255, 255, 255, 0.64);
+    --liquid-bg-strong: rgba(255, 255, 255, 0.92);
+    --liquid-border: rgba(15, 23, 42, 0.12);
+    --liquid-border-strong: rgba(37, 99, 235, 0.24);
+    --liquid-highlight: rgba(255, 255, 255, 0.75);
+    --liquid-shadow: 0 22px 60px rgba(15, 23, 42, 0.10);
+}
+
+    body.light-theme,
+    body.light-theme html {
+        color: #0f172a !important;
+    }
+
+body.light-theme {
+    background: linear-gradient(180deg, rgba(244, 247, 251, 0.94), rgba(226, 232, 240, 0.96)), radial-gradient(circle at 72% 14%, rgba(37, 99, 235, 0.10), transparent 32%), radial-gradient(circle at 22% 82%, rgba(124, 58, 237, 0.08), transparent 34%), url('/images/autoservice-bg.png') center center / cover no-repeat fixed !important;
+    background-color: #f4f7fb !important;
+}
+
+    body.light-theme::before {
+        background: linear-gradient(90deg, rgba(255,255,255,0.58), transparent 28%, transparent 72%, rgba(255,255,255,0.62)), radial-gradient(circle at center, transparent 42%, rgba(226,232,240,0.40) 100%) !important;
+    }
+
+    body.light-theme::after {
+        background: linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.030) 1px, transparent 1px) !important;
+        opacity: 0.42 !important;
+        mix-blend-mode: multiply !important;
+    }
+
+    body.light-theme .app-shell,
+    body.light-theme .app-main,
+    body.light-theme .content-surface,
+    body.light-theme .page,
+    body.light-theme main,
+    body.light-theme .content,
+    body.light-theme article,
+    body.light-theme .main-content {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #0f172a !important;
+    }
+
+    /* Sidebar / navigation */
+
+    body.light-theme .app-sidebar,
+    body.light-theme .sidebar {
+        background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(241,245,249,0.92)) !important;
+        border-right: 1px solid rgba(15, 23, 42, 0.12) !important;
+        box-shadow: 14px 0 44px rgba(15, 23, 42, 0.08) !important;
+        color: #0f172a !important;
+    }
+
+    body.light-theme .brand-block {
+        border-bottom-color: rgba(15, 23, 42, 0.10) !important;
+    }
+
+    body.light-theme .brand-title,
+    body.light-theme .admin-name,
+    body.light-theme .system-status {
+        color: #0f172a !important;
+    }
+
+    body.light-theme .brand-subtitle,
+    body.light-theme .system-date,
+    body.light-theme .admin-email,
+    body.light-theme .version-text,
+    body.light-theme .online-text {
+        color: #64748b !important;
+    }
+
+    body.light-theme .nav-item {
+        color: #334155 !important;
+        background: rgba(255, 255, 255, 0.68) !important;
+        border-color: rgba(15, 23, 42, 0.10) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.70), 0 8px 20px rgba(15, 23, 42, 0.05) !important;
+    }
+
+        body.light-theme .nav-item:hover,
+        body.light-theme .nav-item.active {
+            color: #0f172a !important;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 58, 237, 0.10)), rgba(255,255,255,0.88) !important;
+            border-color: rgba(37, 99, 235, 0.32) !important;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.12) !important;
+        }
+
+    body.light-theme .nav-danger {
+        color: #b91c1c !important;
+    }
+
+    body.light-theme .nav-beta {
+        color: #5b21b6 !important;
+        background: rgba(124, 58, 237, 0.12) !important;
+        border-color: rgba(124, 58, 237, 0.24) !important;
+    }
+
+    /* Topbar */
+
+    body.light-theme .app-topbar,
+    body.light-theme .topbar-actions,
+    body.light-theme .topbar-user {
+        color: #0f172a !important;
+    }
+
+    body.light-theme .topbar-search,
+    body.light-theme .topbar-button,
+    body.light-theme .new-order-button {
+        color: #0f172a !important;
+        background: rgba(255,255,255,0.78) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 10px 24px rgba(15, 23, 42, 0.06) !important;
+    }
+
+        body.light-theme .topbar-search input {
+            color: #0f172a !important;
+        }
+
+            body.light-theme .topbar-search input::placeholder {
+                color: #64748b !important;
+            }
+
+        body.light-theme .topbar-search kbd {
+            color: #475569 !important;
+            background: #f1f5f9 !important;
+            border-color: rgba(15, 23, 42, 0.12) !important;
+        }
+
+    body.light-theme .new-order-button,
+    body.light-theme .btn-primary,
+    body.light-theme .login-submit-button,
+    body.light-theme .clean-home-button-primary,
+    body.light-theme .home-action-primary,
+    body.light-theme .home-action-btn.primary,
+    body.light-theme .home-action-btn.home-action-primary {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+        border-color: rgba(37, 99, 235, 0.36) !important;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.20) !important;
+    }
+
+    /* Panels/cards */
+
+    body.light-theme .card,
+    body.light-theme .card-body,
+    body.light-theme .home-welcome-card,
+    body.light-theme .home-hero,
+    body.light-theme .home-stat-card,
+    body.light-theme .home-feature-card,
+    body.light-theme .home-shortcut-card,
+    body.light-theme .dashboard-card,
+    body.light-theme .requests-section,
+    body.light-theme .repair-workspace,
+    body.light-theme .repair-main-card,
+    body.light-theme .repair-summary-card,
+    body.light-theme .damage-map-panel,
+    body.light-theme .damage-cart-panel,
+    body.light-theme .vehicle-map-card,
+    body.light-theme .request-details-modal,
+    body.light-theme .request-details-card,
+    body.light-theme .photo-viewer-modal,
+    body.light-theme .login-card,
+    body.light-theme .system-card,
+    body.light-theme .admin-card,
+    body.light-theme .hero-stat-card,
+    body.light-theme .stat-card,
+    body.light-theme .summary-breakdown,
+    body.light-theme .summary-empty,
+    body.light-theme .summary-hint,
+    body.light-theme .request-info-item,
+    body.light-theme .client-status-message,
+    body.light-theme .ai-glass-card,
+    body.light-theme .ai-warning-card,
+    body.light-theme .ai-photo-preview,
+    body.light-theme .ai-upload-zone,
+    body.light-theme .ai-result-item,
+    body.light-theme .ai-comment-box,
+    body.light-theme .ai-json-box,
+    body.light-theme .ai-damage-zone-card {
+        color: #0f172a !important;
+        background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(248,250,252,0.72)) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255,255,255,0.78) !important;
+        backdrop-filter: blur(18px) saturate(1.12) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+    }
+
+    body.light-theme .card-header {
+        color: #0f172a !important;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(124, 58, 237, 0.06)), rgba(255,255,255,0.82) !important;
+        border-bottom-color: rgba(15, 23, 42, 0.10) !important;
+    }
+
+    /* Headings/text */
+
+    body.light-theme h1,
+    body.light-theme h2,
+    body.light-theme h3,
+    body.light-theme h4,
+    body.light-theme h5,
+    body.light-theme h6,
+    body.light-theme .card h3,
+    body.light-theme .card h4,
+    body.light-theme .card h5,
+    body.light-theme .repair-card-title h3,
+    body.light-theme .summary-title h3,
+    body.light-theme .requests-header h2,
+    body.light-theme .damage-cart-header h3,
+    body.light-theme .damage-map-header h3,
+    body.light-theme .ai-card-title h3,
+    body.light-theme .ai-result-card h3,
+    body.light-theme .ai-damage-zones h4,
+    body.light-theme .login-card-header h3,
+    body.light-theme .page-hero h1,
+    body.light-theme .brand-title {
+        color: #0f172a !important;
+        text-shadow: none !important;
+    }
+
+    body.light-theme p,
+    body.light-theme span,
+    body.light-theme small,
+    body.light-theme label,
+    body.light-theme .form-label,
+    body.light-theme .card p,
+    body.light-theme .repair-section-header p,
+    body.light-theme .damage-cart-header p,
+    body.light-theme .damage-map-header p,
+    body.light-theme .summary-title p,
+    body.light-theme .ai-card-title p,
+    body.light-theme .ai-empty-result,
+    body.light-theme .ai-loading,
+    body.light-theme .ai-file-empty,
+    body.light-theme .ai-file-info,
+    body.light-theme .text-muted {
+        color: #64748b !important;
+        text-shadow: none !important;
+    }
+
+    body.light-theme strong,
+    body.light-theme b,
+    body.light-theme .stat-value,
+    body.light-theme .ai-result-item strong,
+    body.light-theme .ai-confidence strong,
+    body.light-theme .request-info-item strong,
+    body.light-theme .damage-cart-item strong {
+        color: #0f172a !important;
+    }
+
+    /* Forms */
+
+    body.light-theme .form-control,
+    body.light-theme .form-select,
+    body.light-theme .login-input,
+    body.light-theme textarea {
+        color: #0f172a !important;
+        background: rgba(255,255,255,0.94) !important;
+        border-color: rgba(15, 23, 42, 0.16) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.80), 0 6px 16px rgba(15, 23, 42, 0.04) !important;
+    }
+
+        body.light-theme .form-control::placeholder,
+        body.light-theme .login-input::placeholder,
+        body.light-theme textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        body.light-theme .form-select option {
+            color: #0f172a !important;
+            background: #ffffff !important;
+        }
+
+    body.light-theme input[type="file"] {
+        color: #334155 !important;
+    }
+
+    /* Tables */
+
+    body.light-theme .table-responsive-mobile {
+        background: rgba(255,255,255,0.76) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+    }
+
+    body.light-theme .table {
+        color: #0f172a !important;
+        --bs-table-color: #0f172a !important;
+        --bs-table-bg: transparent !important;
+        --bs-table-striped-bg: rgba(15, 23, 42, 0.035) !important;
+        --bs-table-hover-bg: rgba(37, 99, 235, 0.075) !important;
+        border-color: rgba(15, 23, 42, 0.10) !important;
+    }
+
+        body.light-theme .table thead th {
+            color: #0f172a !important;
+            background: rgba(241, 245, 249, 0.92) !important;
+            border-color: rgba(15, 23, 42, 0.10) !important;
+        }
+
+        body.light-theme .table tbody td,
+        body.light-theme .table tbody tr,
+        body.light-theme .table th,
+        body.light-theme .table td {
+            color: #0f172a !important;
+            background-color: transparent !important;
+            border-color: rgba(15, 23, 42, 0.10) !important;
+        }
+
+        body.light-theme .table small,
+        body.light-theme .table .text-muted {
+            color: #64748b !important;
+        }
+
+    /* Buttons */
+
+    body.light-theme .btn-outline-primary,
+    body.light-theme .btn-outline-secondary,
+    body.light-theme .btn-outline-dark,
+    body.light-theme .request-table-action,
+    body.light-theme .clean-home-button,
+    body.light-theme .home-action-btn {
+        color: #1e293b !important;
+        background: rgba(255,255,255,0.78) !important;
+        border-color: rgba(15, 23, 42, 0.16) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.70), 0 8px 18px rgba(15, 23, 42, 0.06) !important;
+    }
+
+        body.light-theme .btn-outline-primary:hover,
+        body.light-theme .btn-outline-secondary:hover,
+        body.light-theme .btn-outline-dark:hover,
+        body.light-theme .request-table-action:hover,
+        body.light-theme .clean-home-button:hover,
+        body.light-theme .home-action-btn:hover {
+            color: #0f172a !important;
+            background: rgba(219, 234, 254, 0.88) !important;
+            border-color: rgba(37, 99, 235, 0.34) !important;
+        }
+
+    body.light-theme .home-action-secondary,
+    body.light-theme .clean-home-button-secondary {
+        color: #92400e !important;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(37, 99, 235, 0.06)), rgba(255,255,255,0.82) !important;
+        border-color: rgba(245, 158, 11, 0.28) !important;
+    }
+
+    /* Status/badges */
+
+    body.light-theme .bg-primary,
+    body.light-theme .badge.bg-primary {
+        background: rgba(37, 99, 235, 0.12) !important;
+        color: #1d4ed8 !important;
+        border-color: rgba(37, 99, 235, 0.28) !important;
+    }
+
+    body.light-theme .bg-warning,
+    body.light-theme .badge.bg-warning {
+        background: rgba(245, 158, 11, 0.16) !important;
+        color: #92400e !important;
+        border-color: rgba(245, 158, 11, 0.28) !important;
+    }
+
+    body.light-theme .bg-success,
+    body.light-theme .badge.bg-success {
+        background: rgba(34, 197, 94, 0.14) !important;
+        color: #166534 !important;
+        border-color: rgba(34, 197, 94, 0.28) !important;
+    }
+
+    body.light-theme .bg-secondary,
+    body.light-theme .badge.bg-secondary {
+        background: rgba(100, 116, 139, 0.14) !important;
+        color: #334155 !important;
+        border-color: rgba(100, 116, 139, 0.24) !important;
+    }
+
+    /* Alerts */
+
+    body.light-theme .alert-secondary,
+    body.light-theme .alert-info {
+        color: #1e3a8a !important;
+        background: rgba(219, 234, 254, 0.72) !important;
+        border-color: rgba(37, 99, 235, 0.18) !important;
+    }
+
+    body.light-theme .alert-danger,
+    body.light-theme .login-error,
+    body.light-theme .ai-error,
+    body.light-theme .summary-error {
+        color: #991b1b !important;
+        background: rgba(254, 226, 226, 0.82) !important;
+        border-color: rgba(220, 38, 38, 0.22) !important;
+    }
+
+    body.light-theme .summary-success {
+        color: #14532d !important;
+        background: rgba(220, 252, 231, 0.82) !important;
+        border-color: rgba(34, 197, 94, 0.24) !important;
+    }
+
+    /* Hero */
+
+    body.light-theme .page-hero {
+        background: linear-gradient(135deg, rgba(255,255,255,0.86), rgba(241,245,249,0.64)) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255,255,255,0.80) !important;
+    }
+
+        body.light-theme .page-hero p {
+            color: #475569 !important;
+        }
+
+    body.light-theme .hero-stat-card {
+        background: rgba(255,255,255,0.76) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+    }
+
+    /* AI page */
+
+    body.light-theme .ai-damage-hero {
+        background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(241,245,249,0.70)) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.10) !important;
+    }
+
+        body.light-theme .ai-damage-hero h2 {
+            color: #0f172a !important;
+        }
+
+        body.light-theme .ai-damage-hero p {
+            color: #475569 !important;
+        }
+
+    body.light-theme .ai-mode-badge,
+    body.light-theme .section-kicker {
+        color: #1d4ed8 !important;
+        background: rgba(219, 234, 254, 0.70) !important;
+        border-color: rgba(37, 99, 235, 0.20) !important;
+    }
+
+    body.light-theme .ai-price-box,
+    body.light-theme .summary-price,
+    body.light-theme .request-price-large,
+    body.light-theme .damage-cart-price,
+    body.light-theme .ai-damage-zone-card b,
+    body.light-theme .ai-price-box strong {
+        color: #15803d !important;
+    }
+
+    body.light-theme .ai-price-box {
+        background: rgba(220, 252, 231, 0.80) !important;
+        border-color: rgba(34, 197, 94, 0.22) !important;
+    }
+
+        body.light-theme .ai-price-box span,
+        body.light-theme .ai-price-box small {
+            color: #166534 !important;
+        }
+
+    body.light-theme .ai-review-warning,
+    body.light-theme .ai-apply-hint {
+        color: #92400e !important;
+        background: rgba(254, 243, 199, 0.82) !important;
+        border-color: rgba(245, 158, 11, 0.24) !important;
+    }
+
+    body.light-theme .ai-json-box textarea {
+        color: #0f172a !important;
+        background: rgba(248,250,252,0.94) !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
+    }
+
+    /* Repair page/map/modals */
+
+    body.light-theme .real-blueprint-v2,
+    body.light-theme .vehicle-blueprint,
+    body.light-theme .request-photo-box,
+    body.light-theme .photo-viewer-body,
+    body.light-theme canvas,
+    body.light-theme .chart-container,
+    body.light-theme .home-chart-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.86), rgba(241,245,249,0.76)) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+    }
+
+    body.light-theme .svg-label-v2 {
+        fill: #0f172a !important;
+        stroke: rgba(255,255,255,0.92) !important;
+    }
+
+    body.light-theme .request-details-backdrop,
+    body.light-theme .photo-viewer-backdrop {
+        background: rgba(226, 232, 240, 0.58) !important;
+        backdrop-filter: blur(10px) saturate(1.10) !important;
+        -webkit-backdrop-filter: blur(10px) saturate(1.10) !important;
+    }
+
+    body.light-theme .request-details-close,
+    body.light-theme .photo-viewer-close,
+    body.light-theme .damage-cart-remove {
+        color: #0f172a !important;
+        background: rgba(255,255,255,0.78) !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
+    }
+
+    /* Chart canvas: не делать белым в тёмной теме и не ломать в светлой */
+    body.light-theme canvas {
+        background-color: rgba(255,255,255,0.78) !important;
+    }
+
+    /* Scrollbar */
+    body.light-theme ::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.05) !important;
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb {
+        background: rgba(37, 99, 235, 0.28) !important;
+    }
+
+        body.light-theme ::-webkit-scrollbar-thumb:hover {
+            background: rgba(37, 99, 235, 0.42) !important;
+        }
+
+/* Mobile */
+
+@media (max-width: 768px) {
+    body.light-theme .app-sidebar {
+        border-right: 0 !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.12) !important;
+    }
+}
+
+
+/* =========================================================
+   LIGHT THEME GARAGE GLASS UPGRADE — FINAL OVERRIDES
+   Более заметный фон сервиса и более читаемый glass-эффект.
+   ========================================================= */
+
+body.light-theme {
+    --light-photo-overlay-top: rgba(237, 242, 248, 0.68);
+    --light-photo-overlay-bottom: rgba(226, 232, 240, 0.78);
+    --light-glass-bg: rgba(255, 255, 255, 0.50);
+    --light-glass-bg-strong: rgba(255, 255, 255, 0.64);
+    --light-glass-bg-soft: rgba(255, 255, 255, 0.38);
+    --light-glass-border: rgba(15, 23, 42, 0.14);
+    --light-glass-border-strong: rgba(37, 99, 235, 0.22);
+    --light-glass-shadow: 0 20px 56px rgba(15, 23, 42, 0.14);
+}
+
+body.light-theme {
+    background: linear-gradient(180deg, var(--light-photo-overlay-top), var(--light-photo-overlay-bottom)), radial-gradient(circle at 75% 12%, rgba(59, 130, 246, 0.12), transparent 28%), radial-gradient(circle at 18% 78%, rgba(124, 58, 237, 0.10), transparent 30%), url('/images/autoservice-bg.png') center center / cover no-repeat fixed !important;
+    background-color: #e9eef5 !important;
+}
+
+    body.light-theme::before {
+        background: linear-gradient(90deg, rgba(255,255,255,0.16), transparent 24%, transparent 76%, rgba(255,255,255,0.18)), radial-gradient(circle at center, transparent 32%, rgba(226,232,240,0.28) 100%) !important;
+    }
+
+    body.light-theme::after {
+        background: linear-gradient(rgba(15, 23, 42, 0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.018) 1px, transparent 1px) !important;
+        background-size: 42px 42px !important;
+        opacity: 0.30 !important;
+        mix-blend-mode: multiply !important;
+    }
+
+    body.light-theme .app-sidebar,
+    body.light-theme .sidebar {
+        background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(248,250,252,0.58)) !important;
+        border-right: 1px solid var(--light-glass-border) !important;
+        box-shadow: 16px 0 48px rgba(15, 23, 42, 0.12) !important;
+        backdrop-filter: blur(24px) saturate(1.12) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(1.12) !important;
+    }
+
+    body.light-theme .topbar-search,
+    body.light-theme .topbar-button,
+    body.light-theme .new-order-button,
+    body.light-theme .nav-item,
+    body.light-theme .form-control,
+    body.light-theme .form-select,
+    body.light-theme .login-input,
+    body.light-theme .request-table-action,
+    body.light-theme .clean-home-button,
+    body.light-theme .home-action-btn,
+    body.light-theme .btn-outline-primary,
+    body.light-theme .btn-outline-secondary,
+    body.light-theme .btn-outline-dark,
+    body.light-theme .system-card,
+    body.light-theme .admin-card,
+    body.light-theme .card,
+    body.light-theme .card-body,
+    body.light-theme .home-welcome-card,
+    body.light-theme .home-hero,
+    body.light-theme .home-stat-card,
+    body.light-theme .home-feature-card,
+    body.light-theme .home-shortcut-card,
+    body.light-theme .dashboard-card,
+    body.light-theme .requests-section,
+    body.light-theme .repair-workspace,
+    body.light-theme .repair-main-card,
+    body.light-theme .repair-summary-card,
+    body.light-theme .damage-map-panel,
+    body.light-theme .damage-cart-panel,
+    body.light-theme .vehicle-map-card,
+    body.light-theme .request-details-modal,
+    body.light-theme .request-details-card,
+    body.light-theme .photo-viewer-modal,
+    body.light-theme .login-card,
+    body.light-theme .hero-stat-card,
+    body.light-theme .stat-card,
+    body.light-theme .summary-breakdown,
+    body.light-theme .summary-empty,
+    body.light-theme .summary-hint,
+    body.light-theme .request-info-item,
+    body.light-theme .client-status-message,
+    body.light-theme .ai-glass-card,
+    body.light-theme .ai-warning-card,
+    body.light-theme .ai-photo-preview,
+    body.light-theme .ai-upload-zone,
+    body.light-theme .ai-result-item,
+    body.light-theme .ai-comment-box,
+    body.light-theme .ai-json-box,
+    body.light-theme .ai-damage-zone-card,
+    body.light-theme .table-responsive-mobile,
+    body.light-theme .page-hero,
+    body.light-theme .hero-stat-card,
+    body.light-theme .real-blueprint-v2,
+    body.light-theme .vehicle-blueprint,
+    body.light-theme .request-photo-box,
+    body.light-theme .photo-viewer-body,
+    body.light-theme canvas,
+    body.light-theme .chart-container,
+    body.light-theme .home-chart-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.44), rgba(255,255,255,0.28)), var(--light-glass-bg) !important;
+        border-color: var(--light-glass-border) !important;
+        box-shadow: var(--light-glass-shadow), inset 0 1px 0 rgba(255,255,255,0.62) !important;
+        backdrop-filter: blur(18px) saturate(1.16) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
+    }
+
+    body.light-theme .page-hero,
+    body.light-theme .home-welcome-card,
+    body.light-theme .requests-section,
+    body.light-theme .repair-main-card,
+    body.light-theme .request-details-modal,
+    body.light-theme .ai-damage-hero {
+        background: linear-gradient(135deg, rgba(255,255,255,0.52), rgba(255,255,255,0.30)), var(--light-glass-bg-strong) !important;
+        border-color: var(--light-glass-border) !important;
+    }
+
+    body.light-theme .hero-stat-card,
+    body.light-theme .home-stat-card,
+    body.light-theme .dashboard-card,
+    body.light-theme .request-info-item,
+    body.light-theme .summary-breakdown > div,
+    body.light-theme .stat-card,
+    body.light-theme .ai-damage-zone-card,
+    body.light-theme .ai-result-item,
+    body.light-theme .summary-price,
+    body.light-theme .summary-hint,
+    body.light-theme .summary-empty {
+        background: linear-gradient(135deg, rgba(255,255,255,0.42), rgba(255,255,255,0.22)), var(--light-glass-bg-soft) !important;
+        border-color: rgba(15, 23, 42, 0.12) !important;
+    }
+
+    body.light-theme .nav-item:hover,
+    body.light-theme .nav-item.active,
+    body.light-theme .topbar-button:hover,
+    body.light-theme .request-table-action:hover,
+    body.light-theme .clean-home-button:hover,
+    body.light-theme .home-action-btn:hover,
+    body.light-theme .btn-outline-primary:hover,
+    body.light-theme .btn-outline-secondary:hover,
+    body.light-theme .btn-outline-dark:hover {
+        background: linear-gradient(135deg, rgba(255,255,255,0.56), rgba(219,234,254,0.32)), rgba(255,255,255,0.54) !important;
+        border-color: var(--light-glass-border-strong) !important;
+        box-shadow: 0 18px 34px rgba(37, 99, 235, 0.14), inset 0 1px 0 rgba(255,255,255,0.70) !important;
+    }
+
+    body.light-theme .page-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 76% 18%, rgba(70, 140, 255, 0.16), transparent 34%), linear-gradient(120deg, rgba(255,255,255,0.26), transparent 26%, transparent 72%, rgba(255,255,255,0.10));
+        opacity: 0.90;
+    }
+
+    body.light-theme .page-hero-overlay {
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(15,23,42,0.02)) !important;
+    }
+
+    body.light-theme .table {
+        --bs-table-bg: transparent !important;
+        --bs-table-striped-bg: rgba(255,255,255,0.16) !important;
+        --bs-table-hover-bg: rgba(37, 99, 235, 0.08) !important;
+    }
+
+        body.light-theme .table thead th {
+            background: rgba(255,255,255,0.42) !important;
+            backdrop-filter: blur(12px) saturate(1.12) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(1.12) !important;
+        }
+
+        body.light-theme .table tbody tr:nth-child(even) {
+            background: rgba(255,255,255,0.10) !important;
+        }
+
+        body.light-theme .table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.07) !important;
+        }
+
+    body.light-theme .ai-result-card .placeholder-state,
+    body.light-theme .ai-result-card .empty-state,
+    body.light-theme .ai-result-placeholder,
+    body.light-theme .result-placeholder,
+    body.light-theme .ai-result-empty,
+    body.light-theme .upload-placeholder-box,
+    body.light-theme .request-photo-empty {
+        background: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(255,255,255,0.16)), rgba(148, 163, 184, 0.18) !important;
+        border: 1px dashed rgba(15, 23, 42, 0.14) !important;
+        color: #64748b !important;
+    }
+
+    body.light-theme .ai-review-warning,
+    body.light-theme .ai-apply-hint {
+        background: linear-gradient(135deg, rgba(254, 243, 199, 0.80), rgba(255,255,255,0.38)) !important;
+        border-color: rgba(245, 158, 11, 0.28) !important;
+    }
+
+    body.light-theme .ai-price-box {
+        background: linear-gradient(135deg, rgba(220,252,231,0.78), rgba(255,255,255,0.34)) !important;
+        border-color: rgba(34, 197, 94, 0.22) !important;
+    }
+
+    body.light-theme .btn-primary,
+    body.light-theme .new-order-button,
+    body.light-theme .login-submit-button,
+    body.light-theme .clean-home-button-primary,
+    body.light-theme .home-action-primary,
+    body.light-theme .home-action-btn.primary,
+    body.light-theme .home-action-btn.home-action-primary {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(124, 58, 237, 0.86)) !important;
+        border-color: rgba(37, 99, 235, 0.28) !important;
+        box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    }
+
+    body.light-theme .app-main,
+    body.light-theme .content-surface {
+        position: relative;
+    }
+
+        body.light-theme .app-main::before,
+        body.light-theme .content-surface::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            background: radial-gradient(circle at 68% 18%, rgba(37, 99, 235, 0.07), transparent 30%), radial-gradient(circle at 22% 84%, rgba(124, 58, 237, 0.06), transparent 28%);
+        }
+
+body.light-theme {
+    background: linear-gradient(180deg, rgba(244, 247, 251, 0.38), rgba(226, 232, 240, 0.58)), radial-gradient(circle at 72% 14%, rgba(37, 99, 235, 0.10), transparent 32%), radial-gradient(circle at 22% 82%, rgba(124, 58, 237, 0.08), transparent 34%), url('/images/autoservice-light-bg.png') center center / cover no-repeat fixed !important;
+    background-color: #edf2f7 !important;
+}
+
+    body.light-theme::before {
+        background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent 24%, transparent 76%, rgba(255,255,255,0.16)), radial-gradient(circle at center, transparent 34%, rgba(226,232,240,0.18) 100%) !important;
+    }
+
+    body.light-theme::after {
+        background: linear-gradient(rgba(15, 23, 42, 0.020) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.016) 1px, transparent 1px) !important;
+        background-size: 42px 42px !important;
+        opacity: 0.22 !important;
+        mix-blend-mode: multiply !important;
+    }
+
+    body.light-theme .app-shell,
+    body.light-theme .app-main,
+    body.light-theme .content-surface,
+    body.light-theme .page,
+    body.light-theme main,
+    body.light-theme .content,
+    body.light-theme article,
+    body.light-theme .main-content {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+
+/* =========================================================
+   LIGHT THEME FINAL GARAGE BACKGROUND OVERRIDE
+   Картинка должна лежать здесь: wwwroot/images/autoservice-light-bg.png
+   Этот блок обязан быть самым последним в CSS-файле.
+   ========================================================= */
+
+body.light-theme {
+    background: linear-gradient(180deg, rgba(244, 247, 251, 0.34), rgba(226, 232, 240, 0.52)), radial-gradient(circle at 72% 14%, rgba(37, 99, 235, 0.10), transparent 32%), radial-gradient(circle at 22% 82%, rgba(124, 58, 237, 0.08), transparent 34%), url('/images/autoservice-light-bg.png') center center / cover no-repeat fixed !important;
+    background-color: #edf2f7 !important;
+    color: #0f172a !important;
+}
+
+    body.light-theme::before {
+        background: linear-gradient(90deg, rgba(255,255,255,0.10), transparent 24%, transparent 76%, rgba(255,255,255,0.14)), radial-gradient(circle at center, transparent 34%, rgba(226,232,240,0.16) 100%) !important;
+    }
+
+    body.light-theme::after {
+        background: linear-gradient(rgba(15, 23, 42, 0.020) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.016) 1px, transparent 1px) !important;
+        background-size: 42px 42px !important;
+        opacity: 0.20 !important;
+        mix-blend-mode: multiply !important;
+    }
+
+    /* ВАЖНО: перебивает старую тёмную подложку из .content::before / .main-content::before */
+    body.light-theme .main-content::before,
+    body.light-theme .content::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        background: radial-gradient(circle at 72% 18%, rgba(37, 99, 235, 0.08), transparent 34%), radial-gradient(circle at 22% 78%, rgba(124, 58, 237, 0.06), transparent 32%), rgba(255, 255, 255, 0.04) !important;
+    }
+
+    body.light-theme .app-shell,
+    body.light-theme .app-main,
+    body.light-theme .content-surface,
+    body.light-theme .page,
+    body.light-theme main,
+    body.light-theme .content,
+    body.light-theme article,
+    body.light-theme .main-content {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+
+    body.light-theme .app-sidebar,
+    body.light-theme .sidebar {
+        background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(248,250,252,0.58)) !important;
+        border-right: 1px solid rgba(15, 23, 42, 0.14) !important;
+        box-shadow: 16px 0 48px rgba(15, 23, 42, 0.12) !important;
+        backdrop-filter: blur(24px) saturate(1.12) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(1.12) !important;
+    }
+
+    body.light-theme .card,
+    body.light-theme .card-body,
+    body.light-theme .home-welcome-card,
+    body.light-theme .home-hero,
+    body.light-theme .home-stat-card,
+    body.light-theme .home-feature-card,
+    body.light-theme .home-shortcut-card,
+    body.light-theme .dashboard-card,
+    body.light-theme .requests-section,
+    body.light-theme .repair-workspace,
+    body.light-theme .repair-main-card,
+    body.light-theme .repair-summary-card,
+    body.light-theme .damage-map-panel,
+    body.light-theme .damage-cart-panel,
+    body.light-theme .vehicle-map-card,
+    body.light-theme .request-details-modal,
+    body.light-theme .request-details-card,
+    body.light-theme .photo-viewer-modal,
+    body.light-theme .login-card,
+    body.light-theme .system-card,
+    body.light-theme .admin-card,
+    body.light-theme .hero-stat-card,
+    body.light-theme .stat-card,
+    body.light-theme .summary-breakdown,
+    body.light-theme .summary-empty,
+    body.light-theme .summary-hint,
+    body.light-theme .request-info-item,
+    body.light-theme .client-status-message,
+    body.light-theme .ai-glass-card,
+    body.light-theme .ai-warning-card,
+    body.light-theme .ai-photo-preview,
+    body.light-theme .ai-upload-zone,
+    body.light-theme .ai-result-item,
+    body.light-theme .ai-comment-box,
+    body.light-theme .ai-json-box,
+    body.light-theme .ai-damage-zone-card,
+    body.light-theme .table-responsive-mobile,
+    body.light-theme .page-hero,
+    body.light-theme .real-blueprint-v2,
+    body.light-theme .vehicle-blueprint,
+    body.light-theme .request-photo-box,
+    body.light-theme .photo-viewer-body,
+    body.light-theme canvas,
+    body.light-theme .chart-container,
+    body.light-theme .home-chart-card {
+        color: #0f172a !important;
+        background: linear-gradient(135deg, rgba(255,255,255,0.44), rgba(255,255,255,0.28)), rgba(255, 255, 255, 0.50) !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
+        box-shadow: 0 20px 56px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255,255,255,0.62) !important;
+        backdrop-filter: blur(18px) saturate(1.16) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
+    }
+
+    body.light-theme .page-hero,
+    body.light-theme .home-welcome-card,
+    body.light-theme .requests-section,
+    body.light-theme .repair-main-card,
+    body.light-theme .request-details-modal,
+    body.light-theme .ai-damage-hero {
+        background: linear-gradient(135deg, rgba(255,255,255,0.52), rgba(255,255,255,0.30)), rgba(255, 255, 255, 0.64) !important;
+        border-color: rgba(15, 23, 42, 0.14) !important;
+    }
+
+    body.light-theme h1,
+    body.light-theme h2,
+    body.light-theme h3,
+    body.light-theme h4,
+    body.light-theme h5,
+    body.light-theme h6,
+    body.light-theme strong,
+    body.light-theme b,
+    body.light-theme .brand-title,
+    body.light-theme .admin-name,
+    body.light-theme .system-status,
+    body.light-theme .stat-value,
+    body.light-theme .ai-result-item strong,
+    body.light-theme .ai-damage-zone-card strong {
+        color: #0f172a !important;
+        text-shadow: none !important;
+    }
+
+    body.light-theme p,
+    body.light-theme span,
+    body.light-theme small,
+    body.light-theme label,
+    body.light-theme .text-muted,
+    body.light-theme .brand-subtitle,
+    body.light-theme .system-date,
+    body.light-theme .admin-email,
+    body.light-theme .version-text,
+    body.light-theme .online-text {
+        color: #64748b !important;
+        text-shadow: none !important;
+    }
+
+    body.light-theme .btn-primary,
+    body.light-theme .new-order-button,
+    body.light-theme .login-submit-button,
+    body.light-theme .clean-home-button-primary,
+    body.light-theme .home-action-primary,
+    body.light-theme .home-action-btn.primary,
+    body.light-theme .home-action-btn.home-action-primary,
+    body.light-theme .ai-apply-card {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(124, 58, 237, 0.86)) !important;
+        border-color: rgba(37, 99, 235, 0.28) !important;
+        box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    }

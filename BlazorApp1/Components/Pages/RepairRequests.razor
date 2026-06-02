@@ -8,6 +8,7 @@
 @using QuestPDF.Helpers
 @using QuestPDF.Infrastructure
 @using System.IO
+@using System.Security.Cryptography
 
 @inject DashboardStatsNotifier StatsNotifier
 @inject IWebHostEnvironment Env
@@ -1003,6 +1004,205 @@
         width: 110px;
         min-width: 110px;
     }
+    /* ===== LIGHT THEME: REPAIR REQUEST SUMMARY GLASS ===== */
+
+    body.light-theme .repair-summary-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.20)) !important;
+        border: 1px solid rgba(31, 70, 130, 0.14) !important;
+        box-shadow: 0 22px 58px rgba(31, 70, 130, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+        backdrop-filter: blur(22px) saturate(1.18) !important;
+        -webkit-backdrop-filter: blur(22px) saturate(1.18) !important;
+    }
+
+    body.light-theme .summary-title h3 {
+        color: #102033 !important;
+    }
+
+    body.light-theme .summary-title p {
+        color: #64748b !important;
+    }
+
+    body.light-theme .summary-price {
+        margin: 18px 0;
+        padding: 16px 18px;
+        border-radius: 18px;
+        color: #118a52 !important;
+        background: linear-gradient(135deg, rgba(220, 252, 231, 0.54), rgba(255, 255, 255, 0.20)) !important;
+        border: 1px solid rgba(34, 197, 94, 0.18) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 12px 28px rgba(21, 128, 61, 0.08) !important;
+    }
+
+    body.light-theme .summary-empty,
+    body.light-theme .summary-hint,
+    body.light-theme .summary-breakdown div {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.16)) !important;
+        border: 1px solid rgba(31, 70, 130, 0.13) !important;
+        color: #243b5a !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 10px 24px rgba(31, 70, 130, 0.06) !important;
+        backdrop-filter: blur(14px) saturate(1.10) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(1.10) !important;
+    }
+
+        body.light-theme .summary-empty,
+        body.light-theme .summary-hint span,
+        body.light-theme .summary-breakdown span {
+            color: #64748b !important;
+        }
+
+        body.light-theme .summary-hint strong,
+        body.light-theme .summary-breakdown strong {
+            color: #102033 !important;
+        }
+
+    body.light-theme .summary-error {
+        color: #be123c !important;
+        background: linear-gradient(135deg, rgba(255, 228, 230, 0.68), rgba(255, 255, 255, 0.22)) !important;
+        border: 1px solid rgba(244, 63, 94, 0.24) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 10px 24px rgba(190, 18, 60, 0.08) !important;
+    }
+
+    body.light-theme .summary-actions {
+        display: grid;
+        gap: 12px;
+    }
+
+        body.light-theme .summary-actions .btn-outline-primary,
+        body.light-theme .summary-actions .btn-outline-secondary,
+        body.light-theme .summary-actions .btn-outline-dark {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.18)) !important;
+            border: 1px solid rgba(31, 70, 130, 0.18) !important;
+            color: #1f3a5f !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 10px 24px rgba(31, 70, 130, 0.07) !important;
+        }
+
+            body.light-theme .summary-actions .btn-outline-primary:hover,
+            body.light-theme .summary-actions .btn-outline-secondary:hover,
+            body.light-theme .summary-actions .btn-outline-dark:hover {
+                background: linear-gradient(135deg, rgba(219, 234, 254, 0.62), rgba(255, 255, 255, 0.26)) !important;
+                border-color: rgba(37, 99, 235, 0.32) !important;
+                color: #0f172a !important;
+            }
+
+        body.light-theme .summary-actions .btn-primary {
+            color: #ffffff !important;
+            background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+            border-color: rgba(37, 99, 235, 0.34) !important;
+            box-shadow: 0 16px 34px rgba(37, 99, 235, 0.22) !important;
+        }
+
+    /* ===== MULTI SELECT DAMAGE MAP FIX ===== */
+
+    .damage-part-item {
+        position: relative;
+    }
+
+        .damage-part-item.active {
+            border-color: rgba(50, 213, 131, 0.95) !important;
+            background: rgba(13, 110, 253, 0.24) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 1px rgba(50, 213, 131, 0.20), 0 0 20px rgba(50, 213, 131, 0.18) !important;
+        }
+
+    .part-check {
+        margin-left: auto;
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb, #22c55e);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 900;
+        box-shadow: 0 0 14px rgba(34, 197, 94, 0.28);
+    }
+
+    .svg-zone-v2.active {
+        opacity: 1 !important;
+        stroke: #32d583 !important;
+        stroke-width: 2.6 !important;
+        filter: drop-shadow(0 0 12px rgba(50, 213, 131, 0.46)) brightness(1.15) !important;
+    }
+
+    body.light-theme .damage-part-item.active {
+        color: #0f172a !important;
+        background: linear-gradient(135deg, rgba(191, 219, 254, 0.72), rgba(220, 252, 231, 0.32)) !important;
+        border-color: rgba(34, 197, 94, 0.48) !important;
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.14), 0 14px 30px rgba(37, 99, 235, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+    }
+
+
+    /* ===== DAMAGE CART: PER-DETAIL EDITOR ===== */
+
+    .damage-cart-item.damage-cart-item-editable {
+        grid-template-columns: minmax(190px, 1fr) minmax(420px, 1.8fr) auto 42px;
+        align-items: end;
+    }
+
+    .damage-cart-title strong {
+        display: block;
+        color: #ffffff;
+    }
+
+    .damage-cart-title span {
+        display: block;
+        margin-top: 4px;
+        color: #9fb3d9;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .damage-cart-editor {
+        display: grid;
+        grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) minmax(120px, 1fr);
+        gap: 10px;
+        align-items: end;
+    }
+
+        .damage-cart-editor label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9fb3d9;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+    .damage-cart-select {
+        min-height: 38px !important;
+        padding: 0 10px !important;
+        border-radius: 12px !important;
+        font-size: 13px !important;
+        font-weight: 750 !important;
+    }
+
+    body.light-theme .damage-cart-title strong {
+        color: #102033 !important;
+    }
+
+    body.light-theme .damage-cart-title span,
+    body.light-theme .damage-cart-editor label {
+        color: #64748b !important;
+    }
+
+    body.light-theme .damage-cart-select {
+        background: rgba(255, 255, 255, 0.66) !important;
+        color: #102033 !important;
+        border-color: rgba(31, 70, 130, 0.18) !important;
+    }
+
+    @@media (max-width: 1200px) {
+        .damage-cart-item.damage-cart-item-editable {
+            grid-template-columns: 1fr;
+        }
+
+        .damage-cart-editor {
+            grid-template-columns: 1fr;
+        }
+
+        .damage-cart-price {
+            justify-self: start;
+        }
+    }
 
 </style>
 
@@ -1257,10 +1457,48 @@
                         <div class="damage-cart-list">
                             @foreach (var item in damageCart)
                             {
-                                <div class="damage-cart-item">
-                                    <div>
+                                <div class="damage-cart-item damage-cart-item-editable">
+                                    <div class="damage-cart-title">
                                         <strong>@item.PartName</strong>
-                                        <span>@item.DamagePreset · @item.RepairType · @item.DamageLevel</span>
+                                        <span>Настройте тип повреждения, ремонт и степень именно для этой детали.</span>
+                                    </div>
+
+                                    <div class="damage-cart-editor">
+                                        <div>
+                                            <label>Повреждение</label>
+                                            <select class="form-select damage-cart-select"
+                                                    value="@item.DamagePreset"
+                                                    @onchange="async (e) => await OnCartDamagePresetChanged(item, e)">
+                                                @foreach (var preset in GetDamagePresetOptionsForPart(item.PartName))
+                                                {
+                                                    <option value="@preset">@preset</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label>Тип ремонта</label>
+                                            <select class="form-select damage-cart-select"
+                                                    value="@item.RepairType"
+                                                    @onchange="async (e) => await OnCartRepairTypeChanged(item, e)">
+                                                @foreach (var repairType in repairTypeOptions)
+                                                {
+                                                    <option value="@repairType">@repairType</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label>Степень</label>
+                                            <select class="form-select damage-cart-select"
+                                                    value="@item.DamageLevel"
+                                                    @onchange="async (e) => await OnCartDamageLevelChanged(item, e)">
+                                                @foreach (var damageLevel in damageLevelOptions)
+                                                {
+                                                    <option value="@damageLevel">@damageLevel</option>
+                                                }
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div class="damage-cart-price">
@@ -1668,7 +1906,7 @@
                 <table class="table table-striped table-hover align-middle">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Код заявки</th>
                             <th>Клиент</th>
                             <th>Авто</th>
                             <th>Повреждение</th>
@@ -1684,7 +1922,10 @@
                         @foreach (var item in requests)
                         {
                             <tr>
-                                <td>@item.Id</td>
+                                <td>
+                                    <strong>@GetRequestPublicCode(item)</strong><br />
+                                    <small class="text-muted">ID: @item.Id</small>
+                                </td>
 
                                 <td>
                                     <strong>@item.ClientName</strong><br />
@@ -1770,7 +2011,7 @@
             <div class="request-details-modal" @onclick:stopPropagation="true">
                 <div class="request-details-header">
                     <div>
-                        <span class="request-details-kicker">Заявка #@selectedRequest.Id</span>
+                        <span class="request-details-kicker">Заявка @GetRequestPublicCode(selectedRequest)</span>
                         <h3>@selectedRequest.ClientName</h3>
                     </div>
 
@@ -1994,6 +2235,37 @@
     private string selectedBodyType = "Седан";
     private string selectedDamagePreset = string.Empty;
     private List<string> selectedDamageParts = new();
+
+    private readonly List<string> damagePresetOptions = new()
+    {
+        "Царапина",
+        "Вмятина",
+        "Скол",
+        "Трещина",
+        "Коррозия",
+        "Замена детали"
+    };
+
+    private readonly List<string> headlightDamagePresetOptions = new()
+    {
+        "Царапина",
+        "Скол",
+        "Замена детали"
+    };
+
+    private readonly List<string> repairTypeOptions = new()
+    {
+        "Ремонт",
+        "Покраска",
+        "Замена"
+    };
+
+    private readonly List<string> damageLevelOptions = new()
+    {
+        "Лёгкое",
+        "Среднее",
+        "Сильное"
+    };
 
     private readonly List<string> damagePartOptions = new()
 {
@@ -2358,10 +2630,11 @@
     private async Task AddDamageToCart()
     {
         errorMessage = "";
+        successMessage = "";
 
-        if (string.IsNullOrWhiteSpace(selectedSinglePart))
+        if (selectedDamageParts.Count == 0)
         {
-            errorMessage = "Выберите повреждённую деталь на схеме.";
+            errorMessage = "Выберите одну или несколько повреждённых деталей на схеме.";
             return;
         }
 
@@ -2383,33 +2656,63 @@
             return;
         }
 
-        var itemCost = await CalculateSingleDamageCostAsync(
-            selectedSinglePart,
-            newRequest.RepairType,
-            newRequest.DamageLevel);
+        var pendingItems = new List<DamageCartItem>();
 
-        if (itemCost <= 0)
+        foreach (var partName in selectedDamageParts.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            errorMessage = $"Не удалось рассчитать стоимость для детали: {selectedSinglePart}. Проверьте прайс-лист.";
-            return;
+            var damagePreset = selectedDamagePreset;
+            var repairType = newRequest.RepairType;
+            var damageLevel = newRequest.DamageLevel;
+
+            if (IsHeadlightPart(partName) && !IsHeadlightAllowedPreset(damagePreset))
+            {
+                damagePreset = "Замена детали";
+                repairType = "Замена";
+                damageLevel = "Сильное";
+            }
+
+            var itemCost = await CalculateSingleDamageCostAsync(
+                partName,
+                repairType,
+                damageLevel);
+
+            if (itemCost <= 0)
+            {
+                errorMessage = $"Не удалось рассчитать стоимость для детали: {partName}. Проверьте прайс-лист.";
+                return;
+            }
+
+            var basePrice = await GetBasePriceForPartAsync(partName, repairType);
+
+            pendingItems.Add(new DamageCartItem
+            {
+                PartName = partName,
+                DamagePreset = damagePreset,
+                RepairType = repairType,
+                DamageLevel = damageLevel,
+                BasePrice = basePrice,
+                Cost = itemCost
+            });
         }
 
-        var basePrice = await GetBasePriceForPartAsync(selectedSinglePart, newRequest.RepairType);
-
-        damageCart.Add(new DamageCartItem
+        foreach (var item in pendingItems)
         {
-            PartName = selectedSinglePart,
-            DamagePreset = selectedDamagePreset,
-            RepairType = newRequest.RepairType,
-            DamageLevel = newRequest.DamageLevel,
-            BasePrice = basePrice,
-            Cost = itemCost
-        });
+            damageCart.RemoveAll(x =>
+                string.Equals(x.PartName, item.PartName, StringComparison.OrdinalIgnoreCase));
+
+            damageCart.Add(item);
+        }
 
         SyncCartToRequest();
         UpdatePreviewFromCart();
 
+        var addedCount = pendingItems.Count;
+
         ClearDamageSelection();
+
+        successMessage = addedCount == 1
+            ? "Повреждение добавлено в корзину. При необходимости измените параметры прямо в строке корзины."
+            : $"Повреждения добавлены в корзину: {addedCount}. Теперь можно настроить тип повреждения отдельно для каждой детали.";
     }
     private async Task<decimal> GetBasePriceForPartAsync(string partName, string repairType)
     {
@@ -2535,10 +2838,20 @@
 
         await StatsNotifier.NotifyChangedAsync();
     }
+    private bool IsHeadlightPart(string partName)
+    {
+        return partName.Contains("фара", StringComparison.OrdinalIgnoreCase);
+    }
+
     private bool HasHeadlightSelected()
     {
-        return selectedDamageParts.Any(x => x.Contains("фара", StringComparison.OrdinalIgnoreCase)) ||
-               selectedSinglePart.Contains("фара", StringComparison.OrdinalIgnoreCase);
+        return selectedDamageParts.Any(IsHeadlightPart);
+    }
+
+    private bool HasOnlyHeadlightsSelected()
+    {
+        return selectedDamageParts.Count > 0 &&
+               selectedDamageParts.All(IsHeadlightPart);
     }
 
     private bool IsHeadlightAllowedPreset(string presetName)
@@ -2550,12 +2863,14 @@
 
     private bool IsDamagePresetDisabled(string presetName)
     {
-        return HasHeadlightSelected() && !IsHeadlightAllowedPreset(presetName);
+        // Ограничиваем пресеты только когда выбраны исключительно фары.
+        // При смешанном выборе пользователь сможет поправить каждую строку в корзине отдельно.
+        return HasOnlyHeadlightsSelected() && !IsHeadlightAllowedPreset(presetName);
     }
 
     private void ValidateDamagePresetForSelectedParts()
     {
-        if (!HasHeadlightSelected())
+        if (!HasOnlyHeadlightsSelected())
             return;
 
         if (string.IsNullOrWhiteSpace(selectedDamagePreset))
@@ -2660,7 +2975,6 @@
 
         await LoadRequests();
     }
-
     private void SelectBodyType(string bodyType)
     {
         selectedBodyType = bodyType;
@@ -2669,11 +2983,7 @@
             .Where(IsDamagePartAvailableForCurrentBody)
             .ToList();
 
-        if (!string.IsNullOrWhiteSpace(selectedSinglePart) &&
-            !IsDamagePartAvailableForCurrentBody(selectedSinglePart))
-        {
-            selectedSinglePart = string.Empty;
-        }
+        selectedSinglePart = selectedDamageParts.LastOrDefault() ?? string.Empty;
 
         ValidateDamagePresetForSelectedParts();
         SyncSelectedDamageParts();
@@ -2685,15 +2995,25 @@
             ? "body-type-tab active"
             : "body-type-tab";
     }
-
     private void SelectDamagePart(string partName)
     {
         if (!IsDamagePartAvailableForCurrentBody(partName))
             return;
 
-        selectedSinglePart = partName;
-        selectedDamageParts.Clear();
-        selectedDamageParts.Add(partName);
+        if (selectedDamageParts.Contains(partName))
+        {
+            selectedDamageParts.Remove(partName);
+
+            if (string.Equals(selectedSinglePart, partName, StringComparison.OrdinalIgnoreCase))
+            {
+                selectedSinglePart = selectedDamageParts.LastOrDefault() ?? string.Empty;
+            }
+        }
+        else
+        {
+            selectedDamageParts.Add(partName);
+            selectedSinglePart = partName;
+        }
 
         ValidateDamagePresetForSelectedParts();
         SyncSelectedDamageParts();
@@ -2794,6 +3114,87 @@
         selectedDamagePreset = presetName;
         newRequest.RepairType = repairType;
         newRequest.DamageLevel = damageLevel;
+    }
+
+    private IEnumerable<string> GetDamagePresetOptionsForPart(string partName)
+    {
+        return IsHeadlightPart(partName)
+            ? headlightDamagePresetOptions
+            : damagePresetOptions;
+    }
+
+    private (string RepairType, string DamageLevel) GetPresetDefaults(string presetName)
+    {
+        return presetName switch
+        {
+            "Царапина" => ("Замена", "Лёгкое"),
+            "Вмятина" => ("Ремонт", "Среднее"),
+            "Скол" => ("Замена", "Лёгкое"),
+            "Трещина" => ("Ремонт", "Среднее"),
+            "Коррозия" => ("Покраска", "Среднее"),
+            "Замена детали" => ("Замена", "Сильное"),
+            _ => ("Ремонт", "Среднее")
+        };
+    }
+
+    private async Task OnCartDamagePresetChanged(DamageCartItem item, ChangeEventArgs e)
+    {
+        var preset = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(preset))
+            return;
+
+        if (IsHeadlightPart(item.PartName) && !IsHeadlightAllowedPreset(preset))
+            return;
+
+        item.DamagePreset = preset;
+
+        var defaults = GetPresetDefaults(preset);
+        item.RepairType = defaults.RepairType;
+        item.DamageLevel = defaults.DamageLevel;
+
+        await RecalculateCartItemAsync(item);
+    }
+
+    private async Task OnCartRepairTypeChanged(DamageCartItem item, ChangeEventArgs e)
+    {
+        var repairType = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(repairType))
+            return;
+
+        item.RepairType = repairType;
+
+        await RecalculateCartItemAsync(item);
+    }
+
+    private async Task OnCartDamageLevelChanged(DamageCartItem item, ChangeEventArgs e)
+    {
+        var damageLevel = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(damageLevel))
+            return;
+
+        item.DamageLevel = damageLevel;
+
+        await RecalculateCartItemAsync(item);
+    }
+
+    private async Task RecalculateCartItemAsync(DamageCartItem item)
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        item.BasePrice = await GetBasePriceForPartAsync(item.PartName, item.RepairType);
+        item.Cost = await CalculateSingleDamageCostAsync(item.PartName, item.RepairType, item.DamageLevel);
+
+        if (item.Cost <= 0)
+        {
+            errorMessage = $"Не удалось рассчитать стоимость для детали: {item.PartName}. Проверьте прайс-лист для типа ремонта “{item.RepairType}”.";
+        }
+
+        SyncCartToRequest();
+        UpdatePreviewFromCart();
     }
 
     private string GetDamagePresetClass(string presetName)
@@ -3067,6 +3468,7 @@
             query = query.Where(x =>
                 x.ClientName.Contains(searchText) ||
                 x.Phone.Contains(searchText) ||
+                x.PublicCode.Contains(searchText) ||
                 x.CarBrand.Contains(searchText) ||
                 x.CarModel.Contains(searchText));
         }
@@ -3198,12 +3600,13 @@
         await using var db = await DbFactory.CreateDbContextAsync();
 
         newRequest.OwnerKey = UserState.UserKey;
+        newRequest.PublicCode = await GenerateUniquePublicCodeAsync(db);
 
         db.RepairRequests.Add(newRequest);
         await db.SaveChangesAsync();
 
-        var createdRequestId = newRequest.Id;
-        successMessage = $"Заявка №{createdRequestId} успешно создана. Вы можете отслеживать её статус в разделе “Мои заявки”.";
+        var createdRequestCode = GetRequestPublicCode(newRequest);
+        successMessage = $"Заявка {createdRequestCode} успешно создана. Клиент сможет посмотреть статус по коду заявки и телефону.";
         ResetPreview();
 
         await JS.InvokeVoidAsync("clearRepairPhoto");
@@ -3231,6 +3634,43 @@
 
         await LoadRequests();
         await StatsNotifier.NotifyChangedAsync();
+    }
+
+    private static string GetRequestPublicCode(RepairRequest request)
+    {
+        return string.IsNullOrWhiteSpace(request.PublicCode)
+            ? $"AE-{request.Id:000000}"
+            : request.PublicCode.Trim().ToUpperInvariant();
+    }
+
+    private static string GeneratePublicCode()
+    {
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var chars = new char[8];
+
+        for (var i = 0; i < chars.Length; i++)
+        {
+            chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+        }
+
+        return $"AE-{new string(chars, 0, 4)}-{new string(chars, 4, 4)}";
+    }
+
+    private static async Task<string> GenerateUniquePublicCodeAsync(AppDbContext db)
+    {
+        for (var attempt = 0; attempt < 30; attempt++)
+        {
+            var code = GeneratePublicCode();
+
+            var exists = await db.RepairRequests
+                .AsNoTracking()
+                .AnyAsync(x => x.PublicCode == code);
+
+            if (!exists)
+                return code;
+        }
+
+        throw new InvalidOperationException("Не удалось создать уникальный номер заявки. Повторите сохранение.");
     }
 
     private async Task DeleteRequest(int id)
@@ -3314,7 +3754,7 @@
 
         await JS.InvokeVoidAsync(
             "downloadFileFromBase64",
-            $"repair-request-{request.Id}.pdf",
+            $"repair-request-{GetRequestPublicCode(request)}.pdf",
             base64);
     }
 
@@ -3399,6 +3839,7 @@
                                             {
                                                 ("Клиент", SafeText(request.ClientName)),
                                                 ("Телефон", SafeText(request.Phone)),
+                                                ("Код заявки", GetRequestPublicCode(request)),
                                                 ("Дата заявки", request.CreatedAt.ToString("dd.MM.yyyy HH:mm")),
                                                 ("Статус", SafeText(request.Status))
                                             });

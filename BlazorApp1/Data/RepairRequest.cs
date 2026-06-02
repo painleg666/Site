@@ -21,5 +21,11 @@ public class RepairRequest
     public string Status { get; set; } = "Новая";
     public string OwnerKey { get; set; } = "";
 
+    public string PublicCode { get; set; } = "";
+    public string? ClientUserId { get; set; }
+    public string? ClientComment { get; set; }
+    public string? ManagerComment { get; set; }
+    public DateTime? StatusUpdatedAt { get; set; }
+    public string? CreatedFromIp { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

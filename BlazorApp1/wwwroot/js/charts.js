@@ -1,48 +1,92 @@
 ﻿let statusChartInstance = null;
 
-const chartDarkTheme = {
-    textColor: "#d8e8ff",
-    mutedTextColor: "#9fb3d9",
-    gridColor: "rgba(255,255,255,0.08)",
-    borderColor: "rgba(120,160,255,0.18)",
-    chartBackground: "rgba(7,19,38,0.92)",
-    tooltipBackground: "rgba(6,19,38,0.96)"
-};
+function getChartTheme() {
+    const isLight = document.body.classList.contains("light-theme");
 
-const darkChartBackgroundPlugin = {
-    id: "darkChartBackground",
+    if (isLight) {
+        return {
+            textColor: "#102033",
+            mutedTextColor: "#475569",
+            gridColor: "rgba(15, 23, 42, 0.10)",
+            borderColor: "rgba(31, 70, 130, 0.16)",
+            chartBackground: "rgba(255, 255, 255, 0.06)",
+            tooltipBackground: "rgba(255, 255, 255, 0.96)",
+            tooltipTitleColor: "#102033",
+            tooltipBodyColor: "#334155"
+        };
+    }
+
+    return {
+        textColor: "#d8e8ff",
+        mutedTextColor: "#9fb3d9",
+        gridColor: "rgba(255,255,255,0.08)",
+        borderColor: "rgba(120,160,255,0.18)",
+        chartBackground: "rgba(7,19,38,0.92)",
+        tooltipBackground: "rgba(6,19,38,0.96)",
+        tooltipTitleColor: "#ffffff",
+        tooltipBodyColor: "#d8e8ff"
+    };
+}
+
+const chartBackgroundPlugin = {
+    id: "chartBackground",
     beforeDraw: function (chart) {
+        const theme = getChartTheme();
         const ctx = chart.ctx;
         const width = chart.width;
         const height = chart.height;
 
         ctx.save();
-        ctx.fillStyle = chartDarkTheme.chartBackground;
+        ctx.fillStyle = theme.chartBackground;
         ctx.fillRect(0, 0, width, height);
         ctx.restore();
     }
 };
 
-window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, completedCount) {
-    const ctx = document.getElementById("statusChart");
+function normalizeStatusValues(values) {
+    if (!Array.isArray(values)) {
+        return [0, 0, 0, 0];
+    }
 
-    if (!ctx) {
+    return [
+        Number(values[0]) || 0,
+        Number(values[1]) || 0,
+        Number(values[2]) || 0,
+        Number(values[3]) || 0
+    ];
+}
+
+function renderStatusChartInternal(canvasId, values) {
+    const canvas = document.getElementById(canvasId);
+
+    if (!canvas) {
         return;
     }
 
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js is not loaded.");
+        return;
+    }
+
+    const theme = getChartTheme();
+    const safeValues = normalizeStatusValues(values);
+
     if (statusChartInstance !== null) {
         statusChartInstance.destroy();
+        statusChartInstance = null;
     }
+
+    const ctx = canvas.getContext("2d");
 
     statusChartInstance = new Chart(ctx, {
         type: "bar",
-        plugins: [darkChartBackgroundPlugin],
+        plugins: [chartBackgroundPlugin],
         data: {
             labels: ["Новая", "В обработке", "Оценена", "Завершена"],
             datasets: [
                 {
                     label: "Количество заявок",
-                    data: [newCount, inProgressCount, estimatedCount, completedCount],
+                    data: safeValues,
                     backgroundColor: [
                         "rgba(30, 139, 255, 0.85)",
                         "rgba(251, 191, 36, 0.85)",
@@ -66,7 +110,7 @@ window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, 
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: 700,
+                duration: 500,
                 easing: "easeOutQuart"
             },
             layout: {
@@ -82,7 +126,7 @@ window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, 
                     display: true,
                     position: "top",
                     labels: {
-                        color: chartDarkTheme.textColor,
+                        color: theme.textColor,
                         font: {
                             size: 13,
                             weight: "600"
@@ -94,10 +138,10 @@ window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, 
                 },
                 tooltip: {
                     enabled: true,
-                    backgroundColor: chartDarkTheme.tooltipBackground,
-                    titleColor: "#ffffff",
-                    bodyColor: chartDarkTheme.textColor,
-                    borderColor: chartDarkTheme.borderColor,
+                    backgroundColor: theme.tooltipBackground,
+                    titleColor: theme.tooltipTitleColor,
+                    bodyColor: theme.tooltipBodyColor,
+                    borderColor: theme.borderColor,
                     borderWidth: 1,
                     cornerRadius: 12,
                     padding: 12,
@@ -114,41 +158,59 @@ window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, 
             scales: {
                 x: {
                     ticks: {
-                        color: chartDarkTheme.mutedTextColor,
+                        color: theme.mutedTextColor,
                         font: {
                             size: 12,
                             weight: "600"
                         }
                     },
                     grid: {
-                        color: "rgba(255,255,255,0.04)",
+                        color: document.body.classList.contains("light-theme")
+                            ? "rgba(15, 23, 42, 0.06)"
+                            : "rgba(255,255,255,0.04)",
                         drawBorder: false
                     },
                     border: {
-                        color: chartDarkTheme.borderColor
+                        color: theme.borderColor
                     }
                 },
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        color: chartDarkTheme.mutedTextColor,
+                        color: theme.mutedTextColor,
                         precision: 0,
+                        stepSize: 1,
                         font: {
                             size: 12,
                             weight: "600"
                         }
                     },
                     grid: {
-                        color: chartDarkTheme.gridColor,
+                        color: theme.gridColor,
                         drawBorder: false
                     },
                     border: {
-                        color: chartDarkTheme.borderColor
+                        color: theme.borderColor
                     }
                 }
             }
         }
     });
+}
+
+window.dashboardCharts = window.dashboardCharts || {};
+
+window.dashboardCharts.renderStatusChart = function (canvasId, values) {
+    renderStatusChartInternal(canvasId, values);
+};
+
+window.renderStatusChart = function (newCount, inProgressCount, estimatedCount, completedCount) {
+    renderStatusChartInternal("statusChart", [
+        newCount,
+        inProgressCount,
+        estimatedCount,
+        completedCount
+    ]);
 };
 
 window.downloadFileFromBase64 = function (fileName, base64Data) {
@@ -168,6 +230,10 @@ window.toggleTheme = function (isDark) {
     } else {
         document.body.classList.remove("dark-theme");
         document.body.classList.add("light-theme");
+    }
+
+    if (statusChartInstance !== null) {
+        statusChartInstance.update();
     }
 };
 

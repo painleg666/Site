@@ -1,11 +1,12 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@implements IDisposable
 
-@using Microsoft.EntityFrameworkCore
 @using Microsoft.JSInterop
 @using MyBlazorSite.Data
 
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject DashboardStatsService StatsService
+@inject DashboardStatsNotifier StatsNotifier
 @inject IJSRuntime JS
 @inject AppUserState UserState
 
@@ -233,17 +234,23 @@
 </style>
 
 @code {
-    private int totalRequests;
-    private int newRequests;
-    private int inProgressRequests;
-    private int estimatedRequests;
-    private int completedRequests;
+    private DashboardStats stats = new();
 
-    private decimal totalAmount;
-    private decimal averageAmount;
+    private bool statusChartNeedsRender;
+
+    private int totalRequests => stats.TotalRequestsCount;
+    private int newRequests => stats.NewRequestsCount;
+    private int inProgressRequests => stats.InProgressCount;
+    private int estimatedRequests => stats.EstimatedCount;
+    private int completedRequests => stats.CompletedCount;
+
+    private decimal totalAmount => stats.TotalAmount;
+    private decimal averageAmount => stats.AverageCheck;
 
     protected override async Task OnInitializedAsync()
     {
+        StatsNotifier.OnChange += RefreshStatsAsync;
+
         await LoadDashboardStatsAsync();
     }
 
@@ -256,40 +263,34 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync(
-                "renderStatusChart",
-                newRequests,
-                inProgressRequests,
-                estimatedRequests,
-                completedRequests);
-        }
+        if (!firstRender && !statusChartNeedsRender)
+            return;
+
+        statusChartNeedsRender = false;
+
+        await JS.InvokeVoidAsync(
+            "renderStatusChart",
+            stats.NewRequestsCount,
+            stats.InProgressCount,
+            stats.EstimatedCount,
+            stats.CompletedCount);
+    }
+
+    private async Task RefreshStatsAsync()
+    {
+        await LoadDashboardStatsAsync();
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadDashboardStatsAsync()
     {
-        await using var db = await DbFactory.CreateDbContextAsync();
+        stats = await StatsService.GetStatsAsync();
+        statusChartNeedsRender = true;
+    }
 
-        totalRequests = await db.RepairRequests.CountAsync();
-
-        newRequests = await db.RepairRequests
-            .CountAsync(x => x.Status == "Новая");
-
-        inProgressRequests = await db.RepairRequests
-            .CountAsync(x => x.Status == "В обработке");
-
-        estimatedRequests = await db.RepairRequests
-            .CountAsync(x => x.Status == "Оценена");
-
-        completedRequests = await db.RepairRequests
-            .CountAsync(x => x.Status == "Завершена");
-
-        totalAmount = await db.RepairRequests
-            .SumAsync(x => x.CalculatedCost);
-
-        averageAmount = totalRequests > 0
-            ? await db.RepairRequests.AverageAsync(x => x.CalculatedCost)
-            : 0;
+    public void Dispose()
+    {
+        StatsNotifier.OnChange -= RefreshStatsAsync;
     }
 }
